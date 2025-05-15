@@ -17,9 +17,18 @@ import { withAuthServerAction } from "@/lib/withAuth";
  * @returns {Promise<{ type: string; message: string; failedDeals?: TransformedDeal[] }>}
  *          Returns an object indicating success or failure and lists any deals that failed to upload.
  */
-const BulkUploadDealsToDB = withAuthServerAction(
-  async (user: User, deals: TransformedDeal[]) => {
-    if (!Array.isArray(deals) || deals.length === 0) {
+const BulkUploadDealsToDB = async ( deals: TransformedDeal[]) => {
+  const userSession = await auth()
+  
+  if(!userSession){
+    return {
+
+      error: "unauthorized user",
+    }
+  }
+  
+  
+  if (!Array.isArray(deals) || deals.length === 0) {
       return {
         error: "No deals or a valid array provided for bulk upload.",
       };
@@ -67,6 +76,5 @@ const BulkUploadDealsToDB = withAuthServerAction(
       };
     }
   },
-);
 
 export default BulkUploadDealsToDB;
