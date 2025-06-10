@@ -130,40 +130,44 @@ const DealCard = ({
         </div>
       </CardHeader>
       <CardContent className="grid gap-3">
-        <InfoItem
-          icon={<DollarSign className="h-4 w-4 text-emerald-500" />}
-          label="Revenue"
-          value={formatCurrency(deal.revenue)}
-        />
-        <InfoItem
-          icon={<Type className="h-4 w-4 text-emerald-500" />}
-          label="DealType"
-          value={deal.dealType}
-        />
-        <InfoItem
-          icon={<DollarSign className="h-4 w-4 text-blue-500" />}
-          label="EBITDA"
-          value={formatCurrency(deal.ebitda)}
-        />
-        <InfoItem
-          icon={<Briefcase className="h-4 w-4 text-violet-500" />}
-          label="Industry"
-          value={deal.industry}
-        />
-        {deal.askingPrice && (
+        <div className="whitespace-nowrap">
           <InfoItem
-            icon={<DollarSign className="h-4 w-4 text-amber-500" />}
-            label="Asking Price"
-            value={formatCurrency(deal.askingPrice)}
+            icon={<DollarSign className="h-4 w-4 text-emerald-500" />}
+            label="Revenue"
+            value={formatCurrency(deal.revenue)}
+            className="whitespace-nowrap"
           />
-        )}
-        {deal.companyLocation && (
           <InfoItem
-            icon={<MapPin className="h-4 w-4 text-rose-500" />}
-            label="Location"
-            value={deal.companyLocation}
+            icon={<Type className="h-4 w-4 text-emerald-500" />}
+            label="DealType"
+            value={deal.dealType}
           />
-        )}
+          <InfoItem
+            icon={<DollarSign className="h-4 w-4 text-blue-500" />}
+            label="EBITDA"
+            value={formatCurrency(deal.ebitda)}
+          />
+          <InfoItem
+            icon={<Briefcase className="h-4 w-4 text-violet-500" />}
+            label="Industry"
+            value={deal.industry}
+          />
+          {deal.askingPrice && (
+            <InfoItem
+              icon={<DollarSign className="h-4 w-4 text-amber-500" />}
+              label="Asking Price"
+              value={formatCurrency(deal.askingPrice)}
+            />
+          )}
+          {deal.companyLocation && (
+            <InfoItem
+              icon={<MapPin className="h-4 w-4 text-rose-500" />}
+              label="Location"
+              value={deal.companyLocation}
+              className="flex-col items-start"
+            />
+          )}
+        </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-2 pt-3">
         <Button className="w-full bg-primary/90 hover:bg-primary" asChild>
@@ -188,17 +192,21 @@ const InfoItem = ({
   icon,
   label,
   value,
+  className,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
+  className?: string;
 }) => (
-  <div className="flex items-center text-sm">
-    {icon}
-    <span className="ml-2 font-medium text-gray-700 dark:text-gray-300">
-      {label}:
-    </span>
-    <span className="ml-1 truncate text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200">
+  <div className={cn("flex items-center text-sm", className)}>
+    <div className="flex items-center">
+      {icon}
+      <span className="ml-2 font-medium text-gray-700 dark:text-gray-300">
+        {label}:
+      </span>
+    </div>
+    <span className="ml-1 truncate whitespace-normal break-words text-justify text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200">
       {value}
     </span>
   </div>

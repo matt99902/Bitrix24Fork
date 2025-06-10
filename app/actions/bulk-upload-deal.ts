@@ -6,6 +6,7 @@ import { TransformedDeal } from "../types";
 import prismaDB from "@/lib/prisma";
 import { DealType, User } from "@prisma/client";
 import { withAuthServerAction } from "@/lib/withAuth";
+import { auth } from "@/auth";
 
 /**
  * Adds a list of transformed deals to Firebase.
@@ -17,64 +18,61 @@ import { withAuthServerAction } from "@/lib/withAuth";
  * @returns {Promise<{ type: string; message: string; failedDeals?: TransformedDeal[] }>}
  *          Returns an object indicating success or failure and lists any deals that failed to upload.
  */
-const BulkUploadDealsToDB = async ( deals: TransformedDeal[]) => {
-  const userSession = await auth()
-  
-  if(!userSession){
+const BulkUploadDealsToDB = async (deals: TransformedDeal[]) => {
+  const userSession = await auth();
+
+  if (!userSession) {
     return {
-
       error: "unauthorized user",
-    }
+    };
   }
-  
-  
+
   if (!Array.isArray(deals) || deals.length === 0) {
+    return {
+      error: "No deals or a valid array provided for bulk upload.",
+    };
+  }
+
+  console.log("deals received", deals);
+
+  try {
+    await prismaDB.deal.createMany({
+      data: deals.map((deal) => ({
+        title: deal.dealCaption || null, // Title is optional in schema, use null as fallback
+        dealCaption: deal.dealCaption || "", // Required in schema, use empty string as fallback
+        firstName: deal.firstName || null, // Optional in schema
+        lastName: deal.lastName || null, // Optional in schema
+        email: deal.email || null, // Optional in schema
+        linkedinUrl: deal.linkedinUrl || null, // Optional in schema
+        workPhone: deal.workPhone?.toString() || null, // Optional in schema
+        revenue: deal.revenue || 0, // Required in schema, use 0 as fallback
+        ebitda: deal.ebitda || 0, // Required in schema, use 0 as fallback
+        ebitdaMargin: deal.ebitdaMargin || 0, // Required in schema, use 0 as fallback
+        industry: deal.industry || "", // Required in schema, use empty string as fallback
+        sourceWebsite: deal.sourceWebsite || "", // Required in schema, use empty string as fallback
+        companyLocation: deal.companyLocation || null, // Optional in schema
+        brokerage: deal.brokerage || "", // Required in schema, use empty string as fallback
+        dealType: DealType.MANUAL, // Fixed value, no fallback needed
+        userId: userSession.user.id,
+      })),
+    });
+
+    return {
+      success: `${deals.length} deals uploaded successfully.`,
+    };
+  } catch (error) {
+    console.error("Bulk upload error:", error);
+
+    if (error instanceof Error) {
       return {
-        error: "No deals or a valid array provided for bulk upload.",
+        error: `Bulk upload failed: ${error.message || "Unknown error"}`,
       };
     }
 
-    console.log("deals received", deals);
-
-    try {
-      await prismaDB.deal.createMany({
-        data: deals.map((deal) => ({
-          title: deal.dealCaption || null, // Title is optional in schema, use null as fallback
-          dealCaption: deal.dealCaption || "", // Required in schema, use empty string as fallback
-          firstName: deal.firstName || null, // Optional in schema
-          lastName: deal.lastName || null, // Optional in schema
-          email: deal.email || null, // Optional in schema
-          linkedinUrl: deal.linkedinUrl || null, // Optional in schema
-          workPhone: deal.workPhone?.toString() || null, // Optional in schema
-          revenue: deal.revenue || 0, // Required in schema, use 0 as fallback
-          ebitda: deal.ebitda || 0, // Required in schema, use 0 as fallback
-          ebitdaMargin: deal.ebitdaMargin || 0, // Required in schema, use 0 as fallback
-          industry: deal.industry || "", // Required in schema, use empty string as fallback
-          sourceWebsite: deal.sourceWebsite || "", // Required in schema, use empty string as fallback
-          companyLocation: deal.companyLocation || null, // Optional in schema
-          brokerage: deal.brokerage || "", // Required in schema, use empty string as fallback
-          dealType: DealType.MANUAL, // Fixed value, no fallback needed
-          userId: user.id,
-        })),
-      });
-
-      return {
-        success: `${deals.length} deals uploaded successfully.`,
-        // message: `${12} deals uploaded successfully.`,
-      };
-    } catch (error) {
-      console.error("Bulk upload error:", error);
-
-      if (error instanceof Error) {
-        return {
-          error: `Bulk upload failed: ${error.message || "Unknown error"}`,
-        };
-      }
-
-      return {
-        error: "Bulk upload failed due to a server error.",
-      };
-    }
-  },
+    return {
+      error: "Bulk upload failed due to a server error.",
+    };
+  }
+};
 
 export default BulkUploadDealsToDB;

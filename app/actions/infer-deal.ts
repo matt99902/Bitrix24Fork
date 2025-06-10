@@ -4,7 +4,7 @@ import { streamObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createStreamableValue } from "ai/rsc";
 import { z } from "zod";
-import { InferDealSchemaType } from "../(protected)/infer/InferDealComponent";
+import { InferDealSchemaType } from "../(protected)/import/InferDealComponent";
 import { InferDealSchema } from "@/components/schemas/infer-deal-schema";
 import { openai } from "@/lib/ai/available-models";
 

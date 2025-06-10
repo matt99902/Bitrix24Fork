@@ -15,6 +15,10 @@ import SearchEbitdaDeals from "@/components/SearchEbitdaDeals";
 import DealTypeFilterSkeleton from "@/components/skeletons/DealTypeFilterSkeleton";
 import UserDealFilter from "@/components/UserDealFilter";
 import DealContainer from "@/components/DealContainer";
+import SearchRevenueDeals from "@/components/search-revenue-deals";
+import SearchLocationDeals from "@/components/search-location-deals";
+import SearchMaxRevenueDeals from "@/components/search-max-revenue-deals";
+import SearchMaxEbitdaDeals from "@/components/search-max-ebitda-deals";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -27,8 +31,12 @@ type SearchParams = Promise<{ [key: string]: string | undefined }>;
 const RawDealsPage = async (props: { searchParams: SearchParams }) => {
   const searchParams = await props.searchParams;
   const search = searchParams?.query || "";
+  const revenue = searchParams?.revenue || "";
+  const location = searchParams?.location || "";
+  const maxRevenue = searchParams?.maxRevenue || "";
+  const maxEbitda = searchParams?.maxEbitda || "";
   const currentPage = Number(searchParams?.page) || 1;
-  const limit = Number(searchParams?.limit) || 20;
+  const limit = Number(searchParams?.limit) || 50;
   const offset = (currentPage - 1) * limit;
 
   const ebitda = searchParams?.ebitda || "";
@@ -46,6 +54,10 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     dealTypes: dealTypes as DealType[],
     ebitda,
     userId,
+    revenue,
+    location,
+    maxRevenue,
+    maxEbitda,
   });
 
   const currentUserRole = await getCurrentUserRole();
@@ -77,6 +89,18 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           </Suspense>
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchEbitdaDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchRevenueDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchMaxRevenueDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchLocationDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchMaxEbitdaDeals />
           </Suspense>
         </div>
         <Suspense fallback={<DealTypeFilterSkeleton />}>

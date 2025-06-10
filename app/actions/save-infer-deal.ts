@@ -1,15 +1,23 @@
 "use server";
 
+import { auth } from "@/auth";
 import { InferDealSchema } from "@/components/schemas/infer-deal-schema";
-import { db } from "@/lib/firebase/init";
 import prismaDB from "@/lib/prisma";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 export default async function SaveInferredDeal({
   generation,
 }: {
   generation: string;
 }) {
+  const userSession = await auth();
+
+  if (!userSession) {
+    return {
+      type: "error",
+      message: "You are not logged in",
+    };
+  }
+
   try {
     const parsedJSONDeal = await JSON.parse(generation);
 
@@ -45,6 +53,7 @@ export default async function SaveInferredDeal({
         ebitdaMargin: parsedDeal.ebitdaMargin || 0,
         brokerage: parsedDeal.brokerage || "Not Mentioned",
         dealType: "AI_INFERRED",
+        userId: userSession.user?.id,
       },
     });
 

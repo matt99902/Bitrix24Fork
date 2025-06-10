@@ -47,24 +47,40 @@ export default async function GetDeals({
  * @param offset - offset
  * @param limit - limit
  * @param dealTypes - deal types
+ * @param ebitda - ebitda
+ * @param revenue - revenue
+ * @param maxRevenue - max revenue
+ * @param userId - user id
  * @returns
  */
 export const GetAllDeals = async ({
   search,
   offset = 0,
-  limit = 20,
+  limit = 50,
   dealTypes,
   ebitda,
+  revenue,
   userId,
+  location,
+  maxRevenue,
+  maxEbitda,
 }: {
   search?: string | undefined;
   offset?: number;
   limit?: number;
   dealTypes?: DealType[];
   ebitda?: string;
+  revenue?: string;
   userId?: string;
+  location?: string;
+  maxRevenue?: string;
+  maxEbitda?: string;
 }): Promise<GetDealsResult> => {
   const ebitdaValue = ebitda ? parseFloat(ebitda) : undefined;
+  const revenueValue = revenue ? parseFloat(revenue) : undefined;
+  const locationValue = location ? location : undefined;
+  const maxRevenueValue = maxRevenue ? parseFloat(maxRevenue) : undefined;
+  const maxEbitdaValue = maxEbitda ? parseFloat(maxEbitda) : undefined;
 
   const whereClause = {
     ...(search ? { dealCaption: { contains: search } } : {}),
@@ -72,10 +88,18 @@ export const GetAllDeals = async ({
       ? { dealType: { in: dealTypes } }
       : {}),
     ...(ebitdaValue !== undefined ? { ebitda: { gte: ebitdaValue } } : {}),
+    ...(revenueValue !== undefined ? { revenue: { gte: revenueValue } } : {}),
+    ...(maxEbitdaValue !== undefined
+      ? { ebitda: { lte: maxEbitdaValue } }
+      : {}),
+    ...(maxRevenueValue !== undefined
+      ? { revenue: { lte: maxRevenueValue } }
+      : {}),
     ...(userId ? { userId: { equals: userId } } : {}),
+    ...(locationValue !== undefined
+      ? { companyLocation: { contains: locationValue } }
+      : {}),
   };
-
-  console.log("whereClause", whereClause);
 
   const [data, totalCount] = await Promise.all([
     prismaDB.deal.findMany({

@@ -46,7 +46,7 @@ const Home = async () => {
                 variant="secondary"
                 asChild
               >
-                <Link href="/new-deal">
+                <Link href="/import">
                   Add New Deal
                   <ArrowRight className="ml-2 inline-block h-5 w-5" />
                 </Link>

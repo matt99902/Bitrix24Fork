@@ -21,7 +21,7 @@ export const PROTECTED_ROUTES = [
   "/inferred-deals",
   "/manual-deals",
   "/published-deals",
-  "/infer",
+  "/import",
   "/admin",
 ];
 

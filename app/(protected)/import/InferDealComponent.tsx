@@ -62,7 +62,7 @@ export const InferNewDealComponent = () => {
   return (
     <section className="big-container block-space">
       <div className="mb-6 space-y-2 text-center md:mb-8">
-        <h1>Infer a New Deal</h1>
+        <h1>Import a New Deal</h1>
         <span className="mb-2 block text-center text-muted-foreground">
           Enter the description of a deal and use AI to generate the required
           format for the deal, save it to the database and then scrape it
@@ -97,13 +97,13 @@ export const InferNewDealComponent = () => {
                 )}
               />
               <Button type="submit" disabled={isPending} className="w-full">
-                {isPending ? "Inferring..." : "Infer Deal"}
+                {isPending ? "Inferring..." : "Import Deal"}
               </Button>
             </form>
           </Form>
         </div>
         <div>
-          <h2>Inferred Deal using ChatGPT</h2>
+          <h2>Imported Deal using ChatGPT</h2>
           <div className="text-wrap">
             <pre
               style={{
