@@ -41,6 +41,8 @@ import { exportDealToBitrix } from "@/app/actions/upload-bitrix";
 import { toast } from "sonner";
 import UploadDealToBitrixButton from "@/components/Buttons/upload-deal-bitrix-button";
 import FetchDealPOC from "@/components/FetchDealPOC";
+import DealDocumentUploadDialog from "@/components/Dialogs/deal-document-upload-dialog";
+import FetchDealDocuments from "@/components/fetch-deal-documents";
 
 type Params = Promise<{ uid: string }>;
 
@@ -286,6 +288,17 @@ export default async function ManualDealSpecificPage(props: {
               >
                 <FetchDealAIScreenings dealId={uid} dealType={dealType} />
               </Suspense>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Deal Documents</CardTitle>
+            <DealDocumentUploadDialog dealId={uid} dealType={dealType} />
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[300px] pr-4">
+              <FetchDealDocuments dealId={uid} dealType={dealType} />
             </ScrollArea>
           </CardContent>
         </Card>

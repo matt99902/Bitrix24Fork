@@ -1,13 +1,9 @@
 import React, { Suspense } from "react";
-import DealCardSkeleton from "@/components/skeletons/DealCardSkeleton";
 import { Metadata } from "next";
-import prismaDB from "@/lib/prisma";
-import DealCard from "@/components/DealCard";
 import getCurrentUserRole from "@/lib/data/current-user-role";
-import GetDeals, { GetAllDeals } from "@/app/actions/get-deal";
+import { GetAllDeals } from "@/app/actions/get-deal";
 import SearchDeals from "@/components/SearchDeal";
 import Pagination from "@/components/pagination";
-import { setTimeout } from "timers/promises";
 import DealTypeFilter from "@/components/DealTypeFilter";
 import { DealType } from "@prisma/client";
 import SearchDealsSkeleton from "@/components/skeletons/SearchDealsSkeleton";

@@ -22,25 +22,29 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
           <h3 className="text-lg font-semibold text-foreground">
             {deal.dealCaption}
           </h3>
-          <div className="text-sm text-muted-foreground">
-            Revenue: ${deal.revenue} · EBITDA: ${deal.ebitda} ·{" "}
-            {deal.industry || "—"}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Revenue:</span>
+            <span className="font-medium text-foreground">${deal.revenue}</span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">EBITDA:</span>
+            <span className="rounded-md bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+              ${deal.ebitda}
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">Industry:</span>
+            <span className="font-medium text-foreground">
+              {deal.industry || "—"}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-shrink-0 gap-2">
+      <div className="flex flex-shrink-0">
         <Link
           href={`/raw-deals/${deal.id}`}
           className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           View Details
-        </Link>
-        <Link
-          href={`/raw-deals/${deal.id}/screen`}
-          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-        >
-          Screen Deal
         </Link>
       </div>
     </div>

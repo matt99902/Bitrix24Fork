@@ -75,9 +75,37 @@ model Deal {
   bitrixId        String?
   bitrixCreatedAt DateTime?
 
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-  POC    POC[]
+  userId       String?
+  user         User?          @relation(fields: [userId], references: [id])
+  POC          POC[]
+  DealDocument DealDocument[]
+}
+
+model DealDocument {
+  id          String               @id @default(cuid())
+  dealId      String
+  title       String
+  description String?
+  category    DealDocumentCategory @default(OTHER)
+
+  deal        Deal     @relation(fields: [dealId], references: [id])
+  documentUrl String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum DealDocumentCategory {
+  LEGAL
+  DOCUMENTATION
+  MARKETING
+  INVESTOR_RELATIONSHIPS
+  TECHNICAL
+  TOOLS
+  LEGISLATION
+  RESEARCH
+  PROSPECTUS
+  FINANCIALS
+  OTHER
 }
 
 model POC {

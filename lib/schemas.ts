@@ -1,4 +1,16 @@
 import * as z from "zod";
+import { DealDocumentCategory } from "@prisma/client";
+
+export const dealDocumentFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  category: z.nativeEnum(DealDocumentCategory),
+  file: z.instanceof(File).refine((file) => file.size <= 20 * 1024 * 1024, {
+    message: "File size must be less than 20MB",
+  }),
+});
+
+export type DealDocumentFormValues = z.infer<typeof dealDocumentFormSchema>;
 
 export const cimFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
