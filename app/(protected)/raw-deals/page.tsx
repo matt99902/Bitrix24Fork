@@ -15,6 +15,8 @@ import SearchRevenueDeals from "@/components/search-revenue-deals";
 import SearchLocationDeals from "@/components/search-location-deals";
 import SearchMaxRevenueDeals from "@/components/search-max-revenue-deals";
 import SearchMaxEbitdaDeals from "@/components/search-max-ebitda-deals";
+import SearchBrokerageDeals from "@/components/SearchBrokerageDeals";
+import SearchIndustryDeals from "@/components/SearchIndustryDeals";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -31,6 +33,8 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
   const location = searchParams?.location || "";
   const maxRevenue = searchParams?.maxRevenue || "";
   const maxEbitda = searchParams?.maxEbitda || "";
+  const brokerage = searchParams?.brokerage || "";
+  const industry = searchParams?.industry || "";
   const currentPage = Number(searchParams?.page) || 1;
   const limit = Number(searchParams?.limit) || 50;
   const offset = (currentPage - 1) * limit;
@@ -54,6 +58,8 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     location,
     maxRevenue,
     maxEbitda,
+    brokerage,
+    industry,
   });
 
   const currentUserRole = await getCurrentUserRole();
@@ -69,19 +75,36 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
         </p>
       </div>
 
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
-          <h4 className="text-lg font-medium">
-            Total Deals: <span className="font-bold">{totalCount}</span>
-          </h4>
-          <div className="ml-4 rounded-md bg-primary/10 px-3 py-1 text-sm">
-            Page {currentPage} of {totalPages}
+      <div className="mb-6 flex flex-col gap-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2">
+            <h4 className="text-lg font-medium">
+              Total Deals: <span className="font-bold">{totalCount}</span>
+            </h4>
+            <div className="ml-4 rounded-md bg-primary/10 px-3 py-1 text-sm">
+              Page {currentPage} of {totalPages}
+            </div>
+          </div>
+          <div className="flex w-full flex-col gap-4 md:w-auto md:flex-row">
+            <Suspense fallback={<DealTypeFilterSkeleton />}>
+              <DealTypeFilter />
+            </Suspense>
+            <Suspense fallback={<DealTypeFilterSkeleton />}>
+              <UserDealFilter />
+            </Suspense>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        {/* Responsive filter/search bar area */}
+        <div className="grid w-full grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 shadow-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchBrokerageDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchIndustryDeals />
           </Suspense>
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchEbitdaDeals />
@@ -99,12 +122,6 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
             <SearchMaxEbitdaDeals />
           </Suspense>
         </div>
-        <Suspense fallback={<DealTypeFilterSkeleton />}>
-          <DealTypeFilter />
-        </Suspense>
-        <Suspense fallback={<DealTypeFilterSkeleton />}>
-          <UserDealFilter />
-        </Suspense>
       </div>
 
       <div className="group-has-[[data-pending]]:animate-pulse">
@@ -124,7 +141,9 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           />
         )}
       </div>
-      <Pagination totalPages={totalPages} />
+      <div className="mt-8 flex justify-center">
+        <Pagination totalPages={totalPages} />
+      </div>
     </section>
   );
 };

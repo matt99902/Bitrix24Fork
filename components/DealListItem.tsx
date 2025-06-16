@@ -18,10 +18,19 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
           onChange={onToggle}
           className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
         />
-        <div>
+        <div className="space-y-2">
           <h3 className="text-lg font-semibold text-foreground">
             {deal.dealCaption}
           </h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <p>Brokerage: {deal.brokerage}</p>
+            <p>
+              Name: {deal.firstName} {deal.lastName}
+            </p>
+            <p>Email: {deal.email}</p>
+            <p>LinkedIn: {deal.linkedinUrl}</p>
+            <p>Phone: {deal.workPhone}</p>
+          </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Revenue:</span>
             <span className="font-medium text-foreground">${deal.revenue}</span>

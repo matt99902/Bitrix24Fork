@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { useRef, useTransition } from "react";
+import { useRef, useTransition, useState } from "react";
 
 import { Loader2, SearchIcon, XCircleIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
@@ -16,6 +16,9 @@ export default function SearchMaxRevenueDeals() {
   const { replace } = useRouter();
   const [isSearching, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState(
+    formatNumberWithCommas(searchParams.get("maxRevenue") || ""),
+  );
 
   const q = searchParams.get("maxRevenue")?.toString();
 
@@ -32,16 +35,39 @@ export default function SearchMaxRevenueDeals() {
     });
   }, 300);
 
+  // US-style number formatting
+  function formatNumberWithCommas(x: string) {
+    if (!x) return "";
+    // Remove all non-digit characters (except dot for decimals)
+    const parts = x.replace(/,/g, "").split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+  }
+
+  // Remove commas for search
+  function unformatNumber(x: string) {
+    return x.replace(/,/g, "");
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/,/g, "");
+    // Only allow numbers (and optional decimal)
+    if (!/^\d*\.?\d*$/.test(rawValue)) return;
+    setInputValue(formatNumberWithCommas(rawValue));
+    handleSearch(rawValue);
+  };
+
   const handleClearInput = () => {
+    setInputValue("");
+    handleSearch("");
     if (inputRef.current) {
       inputRef.current.value = "";
-      handleSearch("");
     }
   };
 
   return (
     <div
-      className="relative flex h-8 items-center"
+      className="relative mx-auto flex h-10 w-full max-w-xs items-center sm:max-w-sm md:max-w-xs lg:max-w-xs xl:max-w-xs"
       data-pending={isSearching ? "" : undefined}
     >
       {isSearching ? (
@@ -50,13 +76,11 @@ export default function SearchMaxRevenueDeals() {
         <SearchIcon className="absolute left-2 top-2 size-4 text-muted-foreground" />
       )}
       <Input
-        className="h-8 w-[160px] pl-8 lg:w-[250px]"
-        type="number"
+        className="h-10 w-full rounded-md pl-8 pr-10 text-base"
+        type="text"
         placeholder="Enter Max Revenue"
-        onChange={(e) => {
-          handleSearch(e.target.value);
-        }}
-        defaultValue={q}
+        value={inputValue}
+        onChange={handleInputChange}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             inputRef?.current?.blur();
@@ -66,7 +90,7 @@ export default function SearchMaxRevenueDeals() {
       />
       {q && (
         <Button
-          className="absolute right-2 top-2 h-4 w-4"
+          className="absolute right-2 top-2 h-6 w-6 p-0"
           onClick={handleClearInput}
           variant={"ghost"}
           size={"icon"}

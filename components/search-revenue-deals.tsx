@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { useRef, useTransition } from "react";
+import { useRef, useTransition, useState } from "react";
 
 import { Loader2, SearchIcon, XCircleIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
@@ -16,6 +16,9 @@ export default function SearchRevenueDeals() {
   const { replace } = useRouter();
   const [isSearching, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState(
+    formatNumberWithCommas(searchParams.get("revenue") || ""),
+  );
 
   const q = searchParams.get("revenue")?.toString();
 
@@ -32,10 +35,33 @@ export default function SearchRevenueDeals() {
     });
   }, 300);
 
+  // US-style number formatting
+  function formatNumberWithCommas(x: string) {
+    if (!x) return "";
+    // Remove all non-digit characters (except dot for decimals)
+    const parts = x.replace(/,/g, "").split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+  }
+
+  // Remove commas for search
+  function unformatNumber(x: string) {
+    return x.replace(/,/g, "");
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/,/g, "");
+    // Only allow numbers (and optional decimal)
+    if (!/^\d*\.?\d*$/.test(rawValue)) return;
+    setInputValue(formatNumberWithCommas(rawValue));
+    handleSearch(rawValue);
+  };
+
   const handleClearInput = () => {
+    setInputValue("");
+    handleSearch("");
     if (inputRef.current) {
       inputRef.current.value = "";
-      handleSearch("");
     }
   };
 
@@ -51,12 +77,10 @@ export default function SearchRevenueDeals() {
       )}
       <Input
         className="h-8 w-[160px] pl-8 lg:w-[250px]"
-        type="number"
+        type="text"
         placeholder="Enter Min Revenue"
-        onChange={(e) => {
-          handleSearch(e.target.value);
-        }}
-        defaultValue={q}
+        value={inputValue}
+        onChange={handleInputChange}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             inputRef?.current?.blur();

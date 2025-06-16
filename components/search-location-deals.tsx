@@ -41,7 +41,7 @@ export default function SearchLocationDeals() {
 
   return (
     <div
-      className="relative flex h-8 items-center"
+      className="relative mx-auto flex h-10 w-full max-w-xs items-center sm:max-w-sm md:max-w-xs lg:max-w-xs xl:max-w-xs"
       data-pending={isSearching ? "" : undefined}
     >
       {isSearching ? (
@@ -50,7 +50,7 @@ export default function SearchLocationDeals() {
         <SearchIcon className="absolute left-2 top-2 size-4 text-muted-foreground" />
       )}
       <Input
-        className="h-8 w-[160px] pl-8 lg:w-[250px]"
+        className="h-10 w-full rounded-md pl-8 pr-10 text-base"
         type="text"
         placeholder="Enter Location value"
         onChange={(e) => {
@@ -66,7 +66,7 @@ export default function SearchLocationDeals() {
       />
       {q && (
         <Button
-          className="absolute right-2 top-2 h-4 w-4"
+          className="absolute right-2 top-2 h-6 w-6 p-0"
           onClick={handleClearInput}
           variant={"ghost"}
           size={"icon"}

@@ -10,23 +10,23 @@ import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export default function SearchDeals() {
+export default function SearchBrokerageDeals() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
   const [isSearching, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const q = searchParams.get("query")?.toString();
+  const q = searchParams.get("brokerage")?.toString();
 
   const handleSearch = useDebouncedCallback((query: string) => {
     startTransition(async () => {
       const params = new URLSearchParams(searchParams);
       if (query) {
-        params.set("query", query);
+        params.set("brokerage", query);
         params.set("page", "1");
       } else {
-        params.delete("query");
+        params.delete("brokerage");
       }
       replace(`${pathname}?${params.toString()}`);
     });
@@ -41,7 +41,7 @@ export default function SearchDeals() {
 
   return (
     <div
-      className="relative mx-auto flex h-10 w-full max-w-xs items-center sm:max-w-sm md:max-w-xs lg:max-w-xs xl:max-w-xs"
+      className="relative flex h-8 items-center"
       data-pending={isSearching ? "" : undefined}
     >
       {isSearching ? (
@@ -50,8 +50,8 @@ export default function SearchDeals() {
         <SearchIcon className="absolute left-2 top-2 size-4 text-muted-foreground" />
       )}
       <Input
-        className="h-10 w-full rounded-md pl-8 pr-10 text-base"
-        placeholder="Search using deal caption..."
+        className="h-8 pl-8"
+        placeholder="Search using brokerage..."
         onChange={(e) => {
           handleSearch(e.target.value);
         }}
@@ -65,7 +65,7 @@ export default function SearchDeals() {
       />
       {q && (
         <Button
-          className="absolute right-2 top-2 h-6 w-6 p-0"
+          className="absolute right-2 top-2 h-4 w-4"
           onClick={handleClearInput}
           variant={"ghost"}
           size={"icon"}

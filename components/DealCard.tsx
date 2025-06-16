@@ -17,6 +17,7 @@ import {
   MapPin,
   Briefcase,
   Type,
+  Building2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -131,6 +132,12 @@ const DealCard = ({
       </CardHeader>
       <CardContent className="grid gap-3">
         <div className="whitespace-nowrap">
+          <InfoItem
+            icon={<Building2 className="h-4 w-4 text-indigo-500" />}
+            label="Brokerage"
+            value={deal.brokerage}
+            className="whitespace-nowrap font-semibold text-indigo-600 dark:text-indigo-400"
+          />
           <InfoItem
             icon={<DollarSign className="h-4 w-4 text-emerald-500" />}
             label="Revenue"
