@@ -18,6 +18,7 @@ import {
   Briefcase,
   Type,
   Building2,
+  Percent,
 } from "lucide-react";
 import {
   Tooltip,
@@ -55,6 +56,19 @@ const DealCard = ({
       notation: "compact",
       maximumFractionDigits: 1,
     }).format(amount);
+  };
+
+  const formatPercent = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "percent",
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
+
+  const calculateEbitdaMargin = (ebitda: number, revenue: number) => {
+    if (revenue === 0) return 0;
+    return ebitda / revenue;
   };
 
   const handleDelete = async () => {
@@ -153,6 +167,13 @@ const DealCard = ({
             icon={<DollarSign className="h-4 w-4 text-blue-500" />}
             label="EBITDA"
             value={formatCurrency(deal.ebitda)}
+          />
+          <InfoItem
+            icon={<Percent className="h-4 w-4 text-blue-500" />}
+            label="EBITDA Margin"
+            value={formatPercent(
+              calculateEbitdaMargin(deal.ebitda, deal.revenue),
+            )}
           />
           <InfoItem
             icon={<Briefcase className="h-4 w-4 text-violet-500" />}

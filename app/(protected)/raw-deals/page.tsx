@@ -17,6 +17,7 @@ import SearchMaxRevenueDeals from "@/components/search-max-revenue-deals";
 import SearchMaxEbitdaDeals from "@/components/search-max-ebitda-deals";
 import SearchBrokerageDeals from "@/components/SearchBrokerageDeals";
 import SearchIndustryDeals from "@/components/SearchIndustryDeals";
+import SearchEbitdaMarginFilter from "@/components/SearchEbitdaMarginFilter";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -35,6 +36,7 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
   const maxEbitda = searchParams?.maxEbitda || "";
   const brokerage = searchParams?.brokerage || "";
   const industry = searchParams?.industry || "";
+  const ebitdaMargin = searchParams?.ebitdaMargin || "";
   const currentPage = Number(searchParams?.page) || 1;
   const limit = Number(searchParams?.limit) || 50;
   const offset = (currentPage - 1) * limit;
@@ -60,6 +62,7 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     maxEbitda,
     brokerage,
     industry,
+    ebitdaMargin,
   });
 
   const currentUserRole = await getCurrentUserRole();
@@ -105,6 +108,9 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           </Suspense>
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchIndustryDeals />
+          </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchEbitdaMarginFilter />
           </Suspense>
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchEbitdaDeals />

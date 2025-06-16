@@ -66,6 +66,7 @@ export const GetAllDeals = async ({
   maxEbitda,
   brokerage,
   industry,
+  ebitdaMargin,
 }: {
   search?: string | undefined;
   offset?: number;
@@ -79,6 +80,7 @@ export const GetAllDeals = async ({
   maxEbitda?: string;
   brokerage?: string;
   industry?: string;
+  ebitdaMargin?: string;
 }): Promise<GetDealsResult> => {
   const ebitdaValue = ebitda ? parseFloat(ebitda) : undefined;
   const revenueValue = revenue ? parseFloat(revenue) : undefined;
@@ -87,6 +89,7 @@ export const GetAllDeals = async ({
   const maxEbitdaValue = maxEbitda ? parseFloat(maxEbitda) : undefined;
   const brokerageValue = brokerage ? brokerage : undefined;
   const industryValue = industry ? industry : undefined;
+  const ebitdaMarginValue = ebitdaMargin ? parseFloat(ebitdaMargin) : undefined;
 
   const whereClause = {
     ...(search ? { dealCaption: { contains: search } } : {}),
@@ -110,6 +113,9 @@ export const GetAllDeals = async ({
       : {}),
     ...(industryValue !== undefined
       ? { industry: { contains: industryValue } }
+      : {}),
+    ...(ebitdaMarginValue !== undefined
+      ? { ebitdaMargin: { gte: ebitdaMarginValue } }
       : {}),
   };
 
