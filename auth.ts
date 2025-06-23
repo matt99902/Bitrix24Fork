@@ -9,6 +9,8 @@ const adminEmails = [
   "rg5353070@gmail.com",
   "destiny@darkalphacapital.com",
   "daigbe@darkalphacapital.com",
+  "diligence@darkalphacapital.com",
+  "da@darkalphacapital.com",
   "daigbe@gmail.com",
   "ayan@darkalphacapital.com",
 ];
