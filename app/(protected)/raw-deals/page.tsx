@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   description: "View the raw deals",
 };
 
-// After
 type SearchParams = Promise<{ [key: string]: string | undefined }>;
 
 const RawDealsPage = async (props: { searchParams: SearchParams }) => {

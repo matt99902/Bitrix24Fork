@@ -38,8 +38,8 @@ const NewDealPage = async () => {
           </p>
           <div className="flex justify-center">
             <Button className="w-full" asChild>
-              <Link href="/infer">
-                <Bot className="mr-2 h-4 w-4" /> Infer Deal
+              <Link href="/import">
+                <Bot className="mr-2 h-4 w-4" /> Import Deal
               </Link>
             </Button>
           </div>

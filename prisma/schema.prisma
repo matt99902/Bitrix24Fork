@@ -60,6 +60,7 @@ model Deal {
   revenue         Float
   ebitda          Float
   title           String?
+  dealTeaser      String?
   grossRevenue    Float?
   askingPrice     Float?
   ebitdaMargin    Float

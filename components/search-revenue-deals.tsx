@@ -76,7 +76,7 @@ export default function SearchRevenueDeals() {
         <SearchIcon className="absolute left-2 top-2 size-4 text-muted-foreground" />
       )}
       <Input
-        className="h-8 w-[160px] pl-8 lg:w-[250px]"
+        className=""
         type="text"
         placeholder="Enter Min Revenue"
         value={inputValue}
