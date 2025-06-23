@@ -27,11 +27,9 @@ const LoginPage = async () => {
           Please sign in to access deal screening using AI.
         </p>
 
-        <Suspense fallback={<p>Loading...</p>}>
-          <div className="justify-center">
-            <SigninGoogle />
-          </div>
-        </Suspense>
+        <div className="justify-center">
+          <SigninGoogle />
+        </div>
 
         <p className="text-center text-xs text-gray-500">
           Only authorized members of the organization can access this platform.
