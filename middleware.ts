@@ -5,17 +5,20 @@ import {
   PROTECTED_BASE_ROUTES,
   PROTECTED_ROUTES,
 } from "./routes";
-import authConfig from "./auth.config";
-import NextAuth from "next-auth";
-
-// 2. Wrapped middleware option
-const { auth } = NextAuth(authConfig);
+import { auth } from "./auth";
 
 export default auth((req) => {
   // Your custom middleware logic goes here
   const currentPathname = req.nextUrl.pathname;
   //   !! converts the value into its boolean equivalent
   const isLoggedIn = !!req.auth;
+
+  const isApiAuthRoute = currentPathname.startsWith("/api/auth");
+  const isPublicRoute = AUTH_ROUTES.includes(currentPathname);
+
+  if (isApiAuthRoute) {
+    return NextResponse.next();
+  }
 
   const isProtectedBaseRoute = PROTECTED_BASE_ROUTES.some((el) =>
     currentPathname.startsWith(el),
