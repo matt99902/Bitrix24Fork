@@ -3,7 +3,7 @@ import React, { Suspense } from "react";
 
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
-import SigninWithGoogleForm from "./SignInGoogleButton";
+import SigninGoogle from "@/components/Buttons/sigin-google-buttoon";
 
 export const metadata: Metadata = {
   title: "Log In to Dark Alpha Capital Deal Sourcing Organization",
@@ -29,7 +29,7 @@ const LoginPage = async () => {
 
         <Suspense fallback={<p>Loading...</p>}>
           <div className="justify-center">
-            <SigninWithGoogleForm />
+            <SigninGoogle />
           </div>
         </Suspense>
 
