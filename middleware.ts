@@ -1,62 +1,44 @@
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
 import {
-  AUTH_ROUTES,
   DEFAULT_LOGIN_REDIRECT,
-  PROTECTED_BASE_ROUTES,
+  AUTH_ROUTES,
   PROTECTED_ROUTES,
-} from "./routes";
-import { auth } from "./auth";
+  PROTECTED_BASE_ROUTES,
+} from "@/routes";
+import { NextResponse } from "next/server";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  // Your custom middleware logic goes here
-  const currentPathname = req.nextUrl.pathname;
-  //   !! converts the value into its boolean equivalent
+  const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
 
-  const isApiAuthRoute = currentPathname.startsWith("/api/auth");
-  const isPublicRoute = AUTH_ROUTES.includes(currentPathname);
+  const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
+  const isPublicRoute = AUTH_ROUTES.includes(nextUrl.pathname);
+  const isProtectedRoute =
+    PROTECTED_ROUTES.includes(nextUrl.pathname) ||
+    PROTECTED_BASE_ROUTES.some((route) => nextUrl.pathname.startsWith(route));
 
   if (isApiAuthRoute) {
     return NextResponse.next();
   }
 
-  const isProtectedBaseRoute = PROTECTED_BASE_ROUTES.some((el) =>
-    currentPathname.startsWith(el),
-  );
-
-  if (isProtectedBaseRoute && !isLoggedIn) {
-    console.log(
-      "Access denied for not logged-in users trying to access a protected base route",
-    );
-    return NextResponse.redirect(new URL("/auth/login", req.url));
-  }
-
-  if (AUTH_ROUTES.includes(currentPathname)) {
-    // we are accessing an auth route
+  if (isPublicRoute) {
     if (isLoggedIn) {
-      console.log(
-        "access denied for accessing auth routes for logged in users",
-      );
-      // we are already logged in so we cant access the auth routes anymore
-      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, req.url));
+      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
+    return NextResponse.next();
   }
 
-  if (PROTECTED_ROUTES.includes(currentPathname)) {
-    // we are accessing a protected routes
-    // check for valid sessions
-    // redirect unauthorized users
-
-    if (!isLoggedIn) {
-      console.log("access denied for not logged in users");
-      return NextResponse.redirect(new URL("/auth/login", req.url));
-    }
+  if (isProtectedRoute && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/auth/login", nextUrl));
   }
 
   return NextResponse.next();
 });
 
-// run for all routes
+// Optionally, don't invoke Middleware on some paths
 export const config = {
   matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
 };
