@@ -21,7 +21,7 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
         />
         <div className="space-y-6">
           <div className="space-y-2">
-            <ScrollArea className="h-20">
+            <ScrollArea className="h-12">
               <span className="font-semibold text-foreground">
                 {deal.title}
               </span>
@@ -34,6 +34,9 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
               Name: {deal.firstName} {deal.lastName}
             </p>
             <p>Email: {deal.email}</p>
+            <p>Status: {deal.status}</p>
+            <p>Reviewed: {deal.isReviewed ? "Yes" : "No"}</p>
+            <p>Published: {deal.isPublished ? "Yes" : "No"}</p>
             <p>LinkedIn: {deal.linkedinUrl}</p>
             <p>Phone: {deal.workPhone}</p>
           </div>

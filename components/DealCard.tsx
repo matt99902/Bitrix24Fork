@@ -19,6 +19,10 @@ import {
   Type,
   Building2,
   Percent,
+  CheckCircle,
+  Circle,
+  Check,
+  Clock,
 } from "lucide-react";
 import {
   Tooltip,
@@ -153,11 +157,45 @@ const DealCard = ({
             className="whitespace-nowrap font-semibold text-indigo-600 dark:text-indigo-400"
           />
           <InfoItem
+            icon={<Type className="h-4 w-4 text-cyan-500" />}
+            label="Status"
+            value={deal.status}
+            className="whitespace-nowrap"
+          />
+
+          <InfoItem
+            icon={
+              deal.isPublished ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <Circle className="h-4 w-4 text-gray-400" />
+              )
+            }
+            label="Published"
+            value={deal.isPublished ? "Yes" : "No"}
+            className="whitespace-nowrap"
+          />
+
+          <InfoItem
+            icon={
+              deal.isReviewed ? (
+                <Check className="h-4 w-4 text-blue-500" />
+              ) : (
+                <Clock className="h-4 w-4 text-yellow-500" />
+              )
+            }
+            label="Reviewed"
+            value={deal.isReviewed ? "Yes" : "No"}
+            className="whitespace-nowrap"
+          />
+
+          <InfoItem
             icon={<DollarSign className="h-4 w-4 text-emerald-500" />}
             label="Revenue"
             value={formatCurrency(deal.revenue)}
             className="whitespace-nowrap"
           />
+
           <InfoItem
             icon={<Type className="h-4 w-4 text-emerald-500" />}
             label="DealType"
@@ -168,6 +206,7 @@ const DealCard = ({
             label="EBITDA"
             value={formatCurrency(deal.ebitda)}
           />
+
           <InfoItem
             icon={<Percent className="h-4 w-4 text-blue-500" />}
             label="EBITDA Margin"
