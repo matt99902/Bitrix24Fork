@@ -9,6 +9,7 @@ import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatNumberWithCommas } from "@/lib/utils";
 
 export default function SearchRevenueDeals() {
   const searchParams = useSearchParams();
@@ -36,19 +37,6 @@ export default function SearchRevenueDeals() {
   }, 300);
 
   // US-style number formatting
-  function formatNumberWithCommas(x: string) {
-    if (!x) return "";
-    // Remove all non-digit characters (except dot for decimals)
-    const parts = x.replace(/,/g, "").split(".");
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    return parts.join(".");
-  }
-
-  // Remove commas for search
-  function unformatNumber(x: string) {
-    return x.replace(/,/g, "");
-  }
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/,/g, "");
     // Only allow numbers (and optional decimal)

@@ -48,6 +48,13 @@ model Account {
   @@id([provider, providerAccountId])
 }
 
+enum DealStatus {
+  AVAILABLE
+  SOLD
+  UNDER_CONTRACT
+  NOT_SPECIFIED
+}
+
 model Deal {
   id              String        @id @default(cuid())
   brokerage       String
@@ -73,6 +80,11 @@ model Deal {
   updatedAt       DateTime      @default(now()) @updatedAt
   SIM             SIM[]
   AiScreening     AiScreening[]
+
+  bitrixLink  String?
+  status      DealStatus @default(NOT_SPECIFIED)
+  isReviewed  Boolean    @default(false)
+  isPublished Boolean    @default(false)
 
   bitrixId        String?
   bitrixCreatedAt DateTime?

@@ -45,6 +45,10 @@ import UploadDealToBitrixButton from "@/components/Buttons/upload-deal-bitrix-bu
 import FetchDealPOC from "@/components/FetchDealPOC";
 import DealDocumentUploadDialog from "@/components/Dialogs/deal-document-upload-dialog";
 import FetchDealDocuments from "@/components/fetch-deal-documents";
+import { formatNumberWithCommas } from "@/lib/utils";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { DealSpecificationsDialog } from "@/components/Dialogs/DealSpecificationsDialog";
 
 type Params = Promise<{ uid: string }>;
 
@@ -76,6 +80,10 @@ export default async function ManualDealSpecificPage(props: {
   params: Params;
 }) {
   const { uid } = await props.params;
+  const userSession = await auth();
+
+  if (!userSession) redirect("/login");
+
   const fetchedDeal = await prismaDB.deal.findUnique({
     where: {
       id: uid,
@@ -116,7 +124,10 @@ export default async function ManualDealSpecificPage(props: {
     companyLocation,
     industry,
     ebitdaMargin,
+    isReviewed,
+    isPublished,
     tags,
+    status,
     askingPrice,
     grossRevenue,
     dealType,
@@ -147,6 +158,27 @@ export default async function ManualDealSpecificPage(props: {
         )}
       </div>
 
+      <div className="flex flex-row gap-2">
+        <h3>IS REVIEWED</h3>
+        <Badge variant={isReviewed ? "default" : "secondary"}>
+          {isReviewed ? "Yes" : "No"}
+        </Badge>
+      </div>
+
+      <div className="flex flex-row gap-2">
+        <h3>IS PUBLISHED</h3>
+        <Badge variant={isPublished ? "default" : "secondary"}>
+          {isPublished ? "Yes" : "No"}
+        </Badge>
+      </div>
+
+      <div>
+        <h3>Status</h3>
+        <Badge variant={status === "AVAILABLE" ? "default" : "secondary"}>
+          {status}
+        </Badge>
+      </div>
+
       <div className="mb-6">
         <div className="mb-1 text-sm font-medium text-muted-foreground">
           Tags
@@ -167,6 +199,13 @@ export default async function ManualDealSpecificPage(props: {
       </div>
 
       <div className="mb-8 flex flex-wrap justify-center gap-4">
+        <DealSpecificationsDialog
+          dealUid={uid}
+          dealStatus={status}
+          dealReviewed={isReviewed}
+          dealPublished={isPublished}
+        />
+
         <Button asChild>
           <Link href={`/raw-deals/${uid}/tags`}>
             <Tag className="mr-2 h-4 w-4" /> Add Tags
@@ -275,17 +314,17 @@ export default async function ManualDealSpecificPage(props: {
               <DealDetailItem
                 icon={<DollarSign className="text-emerald-500" />}
                 label="Revenue"
-                value={revenue}
+                value={`$ ${formatNumberWithCommas(String(revenue))}`}
               />
               <DealDetailItem
                 icon={<DollarSign className="text-cyan-500" />}
                 label="EBITDA"
-                value={ebitda}
+                value={`$ ${formatNumberWithCommas(String(ebitda))}`}
               />
               <DealDetailItem
                 icon={<Percent className="text-violet-500" />}
                 label="EBITDA Margin"
-                value={ebitdaMargin}
+                value={`${ebitdaMargin}%`}
               />
               <DealDetailItem
                 icon={<CreditCard className="text-rose-500" />}

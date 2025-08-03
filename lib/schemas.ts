@@ -1,5 +1,15 @@
 import * as z from "zod";
-import { DealDocumentCategory } from "@prisma/client";
+import { DealDocumentCategory, DealStatus } from "@prisma/client";
+
+export const dealSpecificationsFormSchema = z.object({
+  isReviewed: z.boolean().default(false),
+  isPublished: z.boolean().default(false),
+  status: z.nativeEnum(DealStatus),
+});
+
+export type dealSpecificationsFormSchemaType = z.infer<
+  typeof dealSpecificationsFormSchema
+>;
 
 export const dealDocumentFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
