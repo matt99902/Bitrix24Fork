@@ -45,6 +45,7 @@ export async function updateDealSpecificationsAction(
         id: dealUid,
       },
       data: {
+        seen: validatedFields.data.seen,
         status: validatedFields.data.status,
         isReviewed: validatedFields.data.isReviewed,
         isPublished: validatedFields.data.isPublished,

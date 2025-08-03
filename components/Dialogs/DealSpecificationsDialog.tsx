@@ -34,10 +34,12 @@ export function DealSpecificationsDialog({
   dealStatus,
   dealReviewed,
   dealPublished,
+  dealSeen,
 }: {
   dealUid: string;
   dealStatus: DealStatus;
   dealReviewed: boolean;
+  dealSeen: boolean;
   dealPublished: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -63,6 +65,7 @@ export function DealSpecificationsDialog({
           <DealSpecificationsForm
             dealUid={dealUid}
             dealStatus={dealStatus}
+            dealSeen={dealSeen}
             dealReviewed={dealReviewed}
             dealPublished={dealPublished}
           />
@@ -91,6 +94,7 @@ export function DealSpecificationsDialog({
           dealStatus={dealStatus}
           dealReviewed={dealReviewed}
           dealPublished={dealPublished}
+          dealSeen={dealSeen}
         />
         <DrawerFooter className="pt-2">
           <DrawerClose asChild>

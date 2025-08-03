@@ -35,11 +35,13 @@ import { updateDealSpecificationsAction } from "@/app/actions/update-deal-specif
 const DealSpecificationsForm = ({
   dealUid,
   dealStatus,
+  dealSeen,
   dealReviewed,
   dealPublished,
 }: {
   dealUid: string;
   dealStatus: DealStatus;
+  dealSeen: boolean;
   dealReviewed: boolean;
   dealPublished: boolean;
 }) => {
@@ -51,6 +53,7 @@ const DealSpecificationsForm = ({
       isPublished: dealPublished,
       isReviewed: dealReviewed,
       status: dealStatus,
+      seen: dealSeen,
     },
   });
 
@@ -132,14 +135,31 @@ const DealSpecificationsForm = ({
 
           <FormField
             control={form.control}
+            name="seen"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Seen</FormLabel>
+                  <FormDescription>Mark this deal as seen</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="isPublished"
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <FormLabel className="text-base">Published</FormLabel>
-                  <FormDescription>
-                    Mark this deal as published and visible to users.
-                  </FormDescription>
+                  <FormDescription>Mark this deal as published</FormDescription>
                 </div>
                 <FormControl>
                   <Switch

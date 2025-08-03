@@ -4,6 +4,7 @@ import { DealDocumentCategory, DealStatus } from "@prisma/client";
 export const dealSpecificationsFormSchema = z.object({
   isReviewed: z.boolean().default(false),
   isPublished: z.boolean().default(false),
+  seen: z.boolean().default(false),
   status: z.nativeEnum(DealStatus),
 });
 

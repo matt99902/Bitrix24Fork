@@ -85,6 +85,7 @@ model Deal {
   status      DealStatus @default(NOT_SPECIFIED)
   isReviewed  Boolean    @default(false)
   isPublished Boolean    @default(false)
+  seen        Boolean    @default(false)
 
   bitrixId        String?
   bitrixCreatedAt DateTime?

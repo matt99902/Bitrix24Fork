@@ -130,6 +130,7 @@ export default async function ManualDealSpecificPage(props: {
     status,
     askingPrice,
     grossRevenue,
+    seen,
     dealType,
     bitrixId,
   } = fetchedDeal;
@@ -156,6 +157,13 @@ export default async function ManualDealSpecificPage(props: {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="flex flex-row gap-2">
+        <h3>IS SEEN</h3>
+        <Badge variant={seen ? "default" : "secondary"}>
+          {seen ? "Yes" : "No"}
+        </Badge>
       </div>
 
       <div className="flex flex-row gap-2">
@@ -204,6 +212,7 @@ export default async function ManualDealSpecificPage(props: {
           dealStatus={status}
           dealReviewed={isReviewed}
           dealPublished={isPublished}
+          dealSeen={seen}
         />
 
         <Button asChild>
