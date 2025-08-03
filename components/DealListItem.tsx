@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import type { Deal } from "@prisma/client";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface Props {
   deal: Deal;
@@ -18,10 +19,15 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
           onChange={onToggle}
           className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
         />
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-foreground">
-            {deal.dealCaption}
-          </h3>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <ScrollArea className="h-20">
+              <span className="font-semibold text-foreground">
+                {deal.title}
+              </span>
+            </ScrollArea>
+          </div>
+
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <p>Brokerage: {deal.brokerage}</p>
             <p>

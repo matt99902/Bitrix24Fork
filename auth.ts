@@ -105,9 +105,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
 });
 
-// Example implementation of determineRole function
+/**
+ * determine the role of the user based on their email
+ *
+ * @param userEmail - the email of the user
+ * @returns the role of the user
+ */
 function determineRole(userEmail: string) {
-  // Access user properties like email, name, etc.
   if (adminEmails.includes(userEmail)) {
     return UserRole.ADMIN;
   } else {

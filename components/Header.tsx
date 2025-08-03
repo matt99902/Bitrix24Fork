@@ -21,12 +21,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./mode-toggle";
 import { Session } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { IconType } from "react-icons/lib";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import NotificationPopover from "./NotificationPopover";
 type HeaderProps = {
   className?: string;
   session: Session | null;
@@ -89,6 +91,8 @@ const Header = ({ className, session }: HeaderProps) => {
           </div>
           <DesktopMenu pathname={pathname} dyanmicLinks={dynamicNavLinks} />
           <div className="flex items-center space-x-4">
+            <NotificationPopover userId={session?.user?.id as string} />
+
             {session ? <ProfileMenu session={session} /> : <AuthDialogNavs />}
           </div>
         </ul>
@@ -112,7 +116,7 @@ function NameLogo() {
       aria-label="Home page"
       className="text-2xl font-bold text-primary transition-colors hover:text-primary/80"
     >
-      Deal Sourcing
+      DAC DEALFLOW
     </Link>
   );
 }

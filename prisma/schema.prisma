@@ -53,6 +53,7 @@ model Deal {
   brokerage       String
   firstName       String?
   lastName        String?
+  tags            String[]      @default([])
   email           String?
   linkedinUrl     String?
   workPhone       String?

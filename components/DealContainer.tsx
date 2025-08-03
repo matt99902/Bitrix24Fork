@@ -21,6 +21,8 @@ import { Button } from "./ui/button";
 import BulkDeleteDealsFromDb from "@/app/actions/bulk-delete-deals";
 import { toast } from "sonner";
 
+import axios from "axios";
+
 interface DealContainerProps {
   data: Deal[];
   userRole: UserRole;
@@ -33,7 +35,7 @@ export default function DealContainer({ data, userRole }: DealContainerProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isPending, startTransition] = useTransition();
+  const [isScreeningPending, startScreenTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
 
   const allSelected = data.length > 0 && selectedIds.size === data.length;
@@ -67,11 +69,29 @@ export default function DealContainer({ data, userRole }: DealContainerProps) {
     });
   }
 
-  function handleBulkScreen() {
-    if (!selectedIds.size) return;
-    const ids = Array.from(selectedIds).join(",");
-    const filteredData = data.filter((d) => selectedIds.has(d.id));
-    console.log("filteredData", filteredData);
+  async function handleBulkScreen() {
+    startScreenTransition(async () => {
+      if (!selectedIds.size) return;
+      const ids = Array.from(selectedIds).join(",");
+      const filteredData = data.filter((d) => selectedIds.has(d.id));
+
+      try {
+        const response = await axios.post(`/api/screen-all`, {
+          dealListings: filteredData,
+        });
+
+        if (response.status !== 200) {
+          throw new Error("Something went wrong");
+        }
+
+        console.log(response.data);
+
+        toast.success("Deals Added to Queue");
+      } catch (error) {
+        console.log(error);
+        toast.error("Something went wrong");
+      }
+    });
   }
 
   return (
@@ -142,17 +162,17 @@ export default function DealContainer({ data, userRole }: DealContainerProps) {
               </AlertDialogContent>
             </AlertDialog>
 
-            <button
+            <Button
               onClick={handleBulkScreen}
-              disabled={!selectedIds.size}
-              className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              disabled={!selectedIds.size || isScreeningPending}
+              className={` ${
                 selectedIds.size
                   ? "bg-primary text-primary-foreground hover:bg-primary/90"
                   : "cursor-not-allowed bg-muted text-muted-foreground"
               }`}
             >
-              Screen Selected
-            </button>
+              {isScreeningPending ? "Screening..." : "Screen Selected"}
+            </Button>
           </div>
         )}
       </div>

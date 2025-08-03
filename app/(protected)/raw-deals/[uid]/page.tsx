@@ -116,6 +116,7 @@ export default async function ManualDealSpecificPage(props: {
     companyLocation,
     industry,
     ebitdaMargin,
+    tags,
     askingPrice,
     grossRevenue,
     dealType,
@@ -146,7 +147,31 @@ export default async function ManualDealSpecificPage(props: {
         )}
       </div>
 
+      <div className="mb-6">
+        <div className="mb-1 text-sm font-medium text-muted-foreground">
+          Tags
+        </div>
+        {tags && tags.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Badge key={tag} className="rounded px-2 py-1 text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs italic text-muted-foreground">
+            No tags added yet.
+          </div>
+        )}
+      </div>
+
       <div className="mb-8 flex flex-wrap justify-center gap-4">
+        <Button asChild>
+          <Link href={`/raw-deals/${uid}/tags`}>
+            <Tag className="mr-2 h-4 w-4" /> Add Tags
+          </Link>
+        </Button>
         <Button asChild>
           <Link href={`/raw-deals/${uid}/edit`}>
             <Edit className="mr-2 h-4 w-4" /> Edit Deal
@@ -279,6 +304,7 @@ export default async function ManualDealSpecificPage(props: {
         <Card className="">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>AI Reasoning</CardTitle>
+
             <Button variant="outline" size="sm" asChild>
               <Link href={`/raw-deals/${uid}/screen`}>
                 <Plus className="mr-2 h-4 w-4" /> Add AI Reasoning

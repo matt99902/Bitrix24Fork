@@ -10,17 +10,17 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/auth";
 import Footer from "@/components/Footer";
 import { SessionProvider } from "next-auth/react";
-import { Geist_Mono } from "next/font/google";
+import { Lora } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "Dark Alpha Capital Deal Sourcing Organization",
   description: "Sourcing and Scrape Deals with AI",
 };
 
-const geistMono = Geist_Mono({
+const lora = Lora({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist-mono",
+  variable: "--font-lora",
 });
 
 export default async function RootLayout({
@@ -31,11 +31,7 @@ export default async function RootLayout({
   const userSession = await auth();
 
   return (
-    <html
-      lang="en"
-      className={cn(GeistSans.variable, geistMono.variable)}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={cn(lora.variable)} suppressHydrationWarning>
       <body className={`antialiased`}>
         <ThemeProvider
           attribute="class"
