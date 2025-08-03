@@ -18,6 +18,7 @@ import SearchMaxEbitdaDeals from "@/components/search-max-ebitda-deals";
 import SearchBrokerageDeals from "@/components/SearchBrokerageDeals";
 import SearchIndustryDeals from "@/components/SearchIndustryDeals";
 import SearchEbitdaMarginFilter from "@/components/SearchEbitdaMarginFilter";
+import SearchSeenDeals from "@/components/search-seen-deals";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -42,6 +43,8 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
 
   const ebitda = searchParams?.ebitda || "";
   const userId = searchParams?.userId || "";
+  const showSeen = searchParams?.seen === "true" ? true : false;
+
   // Ensure dealTypes is always an array
   const dealTypes =
     typeof searchParams?.dealType === "string"
@@ -62,6 +65,7 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     brokerage,
     industry,
     ebitdaMargin,
+    showSeen,
   });
 
   const currentUserRole = await getCurrentUserRole();
@@ -123,6 +127,10 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchLocationDeals />
           </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchSeenDeals />
+          </Suspense>
+
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchMaxEbitdaDeals />
           </Suspense>

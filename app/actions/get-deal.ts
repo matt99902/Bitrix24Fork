@@ -68,6 +68,7 @@ export const GetAllDeals = async ({
   brokerage,
   industry,
   ebitdaMargin,
+  showSeen,
 }: {
   search?: string | undefined;
   offset?: number;
@@ -82,6 +83,7 @@ export const GetAllDeals = async ({
   brokerage?: string;
   industry?: string;
   ebitdaMargin?: string;
+  showSeen?: boolean;
 }): Promise<GetDealsResult> => {
   const ebitdaValue = ebitda ? parseFloat(ebitda) : undefined;
   const revenueValue = revenue ? parseFloat(revenue) : undefined;
@@ -118,6 +120,7 @@ export const GetAllDeals = async ({
     ...(ebitdaMarginValue !== undefined
       ? { ebitdaMargin: { gte: ebitdaMarginValue } }
       : {}),
+    ...(showSeen ? { seen: { equals: showSeen } } : {}),
   };
 
   const [data, totalCount] = await Promise.all([
