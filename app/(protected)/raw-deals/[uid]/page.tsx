@@ -135,77 +135,97 @@ export default async function ManualDealSpecificPage(props: {
     bitrixId,
   } = fetchedDeal;
 
-  console.log("tags inside deal", tags);
-
   return (
     <section className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <PreviousPageButton />
       </div>
 
-      <div className="mb-8 text-center">
-        <Badge variant="secondary" className="mb-4">
-          Manual Deal
-        </Badge>
-        <div className="mb-4 max-h-32 overflow-y-auto rounded-lg border border-border/50 bg-muted/30 p-4">
-          <p className="break-words">{title}</p>
+      <div className="mb-10">
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <Badge
+            variant="secondary"
+            className="mb-1 rounded-full px-3 py-1 text-sm tracking-wide shadow-sm"
+          >
+            Manual Deal
+          </Badge>
+          <h1 className="max-w-2xl break-words text-center text-2xl font-bold text-primary">
+            {title}
+          </h1>
         </div>
         {dealCaption && (
-          <div className="mx-auto max-w-4xl">
-            <div className="max-h-48 overflow-y-auto rounded-lg border border-border/50 bg-muted/30 p-4">
-              <p className="break-words text-sm leading-relaxed text-muted-foreground sm:text-base md:text-lg">
+          <div className="mx-auto mb-6 max-w-3xl">
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-border/30 bg-muted/40 p-5 shadow-sm">
+              <p className="break-words text-base leading-relaxed text-muted-foreground">
                 {dealCaption}
               </p>
             </div>
           </div>
         )}
-      </div>
 
-      <div className="flex flex-row gap-2">
-        <h3>IS SEEN</h3>
-        <Badge variant={seen ? "default" : "secondary"}>
-          {seen ? "Yes" : "No"}
-        </Badge>
-      </div>
-
-      <div className="flex flex-row gap-2">
-        <h3>IS REVIEWED</h3>
-        <Badge variant={isReviewed ? "default" : "secondary"}>
-          {isReviewed ? "Yes" : "No"}
-        </Badge>
-      </div>
-
-      <div className="flex flex-row gap-2">
-        <h3>IS PUBLISHED</h3>
-        <Badge variant={isPublished ? "default" : "secondary"}>
-          {isPublished ? "Yes" : "No"}
-        </Badge>
-      </div>
-
-      <div>
-        <h3>Status</h3>
-        <Badge variant={status === "AVAILABLE" ? "default" : "secondary"}>
-          {status}
-        </Badge>
-      </div>
-
-      <div className="mb-6">
-        <div className="mb-1 text-sm font-medium text-muted-foreground">
-          Tags
+        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="flex flex-col items-center rounded-lg border border-border/20 bg-muted/40 p-3 shadow-sm">
+            <span className="mb-1 text-xs font-medium text-muted-foreground">
+              Seen
+            </span>
+            <Badge
+              variant={seen ? "default" : "secondary"}
+              className="px-3 py-1 text-xs"
+            >
+              {seen ? "Yes" : "No"}
+            </Badge>
+          </div>
+          <div className="flex flex-col items-center rounded-lg border border-border/20 bg-muted/40 p-3 shadow-sm">
+            <span className="mb-1 text-xs font-medium text-muted-foreground">
+              Reviewed
+            </span>
+            <Badge
+              variant={isReviewed ? "default" : "secondary"}
+              className="px-3 py-1 text-xs"
+            >
+              {isReviewed ? "Yes" : "No"}
+            </Badge>
+          </div>
+          <div className="flex flex-col items-center rounded-lg border border-border/20 bg-muted/40 p-3 shadow-sm">
+            <span className="mb-1 text-xs font-medium text-muted-foreground">
+              Published
+            </span>
+            <Badge
+              variant={isPublished ? "default" : "secondary"}
+              className="px-3 py-1 text-xs"
+            >
+              {isPublished ? "Yes" : "No"}
+            </Badge>
+          </div>
+          <div className="flex flex-col items-center rounded-lg border border-border/20 bg-muted/40 p-3 shadow-sm">
+            <span className="mb-1 text-xs font-medium text-muted-foreground">
+              Status
+            </span>
+            <Badge
+              variant={status === "AVAILABLE" ? "default" : "secondary"}
+              className="px-3 py-1 text-xs capitalize"
+            >
+              {status.toLowerCase()}
+            </Badge>
+          </div>
         </div>
-        {tags && tags.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <Badge key={tag} className="rounded px-2 py-1 text-xs">
-                {tag}
-              </Badge>
-            ))}
+
+        <div className="mb-6">
+          <div className="mb-1 text-sm font-semibold text-muted-foreground">
+            Tags
           </div>
-        ) : (
-          <div className="text-xs italic text-muted-foreground">
-            No tags added yet.
-          </div>
-        )}
+          {tags && tags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <Badge key={tag}>{tag}</Badge>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs italic text-muted-foreground">
+              No tags added yet.
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mb-8 flex flex-wrap justify-center gap-4">
