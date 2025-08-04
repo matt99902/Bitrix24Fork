@@ -135,6 +135,8 @@ export default async function ManualDealSpecificPage(props: {
     bitrixId,
   } = fetchedDeal;
 
+  console.log("tags inside deal", tags);
+
   return (
     <section className="container mx-auto px-4 py-8">
       <div className="mb-8">

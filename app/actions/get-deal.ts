@@ -72,6 +72,7 @@ export const GetAllDeals = async ({
   showReviewed,
   showPublished,
   status,
+  tags,
 }: {
   search?: string | undefined;
   offset?: number;
@@ -90,6 +91,7 @@ export const GetAllDeals = async ({
   showReviewed?: boolean;
   showPublished?: boolean;
   status?: DealStatus;
+  tags?: string[];
 }): Promise<GetDealsResult> => {
   const ebitdaValue = ebitda ? parseFloat(ebitda) : undefined;
   const revenueValue = revenue ? parseFloat(revenue) : undefined;
@@ -130,6 +132,7 @@ export const GetAllDeals = async ({
     ...(showReviewed ? { isReviewed: { equals: showReviewed } } : {}),
     ...(showPublished ? { isPublished: { equals: showPublished } } : {}),
     ...(status ? { status: { equals: status } } : {}),
+    ...(tags && tags.length > 0 ? { tags: { hasSome: tags } } : {}),
   };
 
   const [data, totalCount] = await Promise.all([

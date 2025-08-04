@@ -22,6 +22,8 @@ import SearchSeenDeals from "@/components/search-seen-deals";
 import SearchReviewedDeals from "@/components/search-review-deals";
 import SearchPublishedDeals from "@/components/search-published-deals";
 import SearchStatusDeals from "@/components/search-status-deals";
+import SearchTagsDeals from "@/components/search-tags-deals";
+import DeleteFiltersButton from "@/components/Buttons/delete-filters-button";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -43,7 +45,6 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
   const currentPage = Number(searchParams?.page) || 1;
   const limit = Number(searchParams?.limit) || 50;
   const offset = (currentPage - 1) * limit;
-
   const ebitda = searchParams?.ebitda || "";
   const userId = searchParams?.userId || "";
   const showSeen = searchParams?.seen === "true" ? true : false;
@@ -52,11 +53,17 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
 
   const status = searchParams?.status || "";
 
-  // Ensure dealTypes is always an array
   const dealTypes =
     typeof searchParams?.dealType === "string"
       ? [searchParams.dealType]
       : searchParams?.dealType || [];
+
+  const tags =
+    typeof searchParams?.tags === "string"
+      ? [searchParams.tags]
+      : searchParams?.tags || [];
+
+  console.log("tags inside filter", tags);
 
   const { data, totalPages, totalCount } = await GetAllDeals({
     search,
@@ -76,6 +83,7 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     showReviewed,
     showPublished,
     status: status as DealStatus,
+    tags: tags as string[],
   });
 
   const currentUserRole = await getCurrentUserRole();
@@ -155,6 +163,12 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchStatusDeals />
           </Suspense>
+
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchTagsDeals />
+          </Suspense>
+
+          <DeleteFiltersButton />
         </div>
       </div>
 
