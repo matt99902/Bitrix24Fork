@@ -3,7 +3,7 @@
 import "server-only";
 
 import prismaDB from "@/lib/prisma";
-import { Deal, DealType } from "@prisma/client";
+import { Deal, DealStatus, DealType } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 interface GetDealsResult {
@@ -69,6 +69,9 @@ export const GetAllDeals = async ({
   industry,
   ebitdaMargin,
   showSeen,
+  showReviewed,
+  showPublished,
+  status,
 }: {
   search?: string | undefined;
   offset?: number;
@@ -84,6 +87,9 @@ export const GetAllDeals = async ({
   industry?: string;
   ebitdaMargin?: string;
   showSeen?: boolean;
+  showReviewed?: boolean;
+  showPublished?: boolean;
+  status?: DealStatus;
 }): Promise<GetDealsResult> => {
   const ebitdaValue = ebitda ? parseFloat(ebitda) : undefined;
   const revenueValue = revenue ? parseFloat(revenue) : undefined;
@@ -121,6 +127,9 @@ export const GetAllDeals = async ({
       ? { ebitdaMargin: { gte: ebitdaMarginValue } }
       : {}),
     ...(showSeen ? { seen: { equals: showSeen } } : {}),
+    ...(showReviewed ? { isReviewed: { equals: showReviewed } } : {}),
+    ...(showPublished ? { isPublished: { equals: showPublished } } : {}),
+    ...(status ? { status: { equals: status } } : {}),
   };
 
   const [data, totalCount] = await Promise.all([

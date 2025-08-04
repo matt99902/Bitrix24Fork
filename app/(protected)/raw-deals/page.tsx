@@ -5,7 +5,7 @@ import { GetAllDeals } from "@/app/actions/get-deal";
 import SearchDeals from "@/components/SearchDeal";
 import Pagination from "@/components/pagination";
 import DealTypeFilter from "@/components/DealTypeFilter";
-import { DealType } from "@prisma/client";
+import { DealStatus, DealType } from "@prisma/client";
 import SearchDealsSkeleton from "@/components/skeletons/SearchDealsSkeleton";
 import SearchEbitdaDeals from "@/components/SearchEbitdaDeals";
 import DealTypeFilterSkeleton from "@/components/skeletons/DealTypeFilterSkeleton";
@@ -19,6 +19,9 @@ import SearchBrokerageDeals from "@/components/SearchBrokerageDeals";
 import SearchIndustryDeals from "@/components/SearchIndustryDeals";
 import SearchEbitdaMarginFilter from "@/components/SearchEbitdaMarginFilter";
 import SearchSeenDeals from "@/components/search-seen-deals";
+import SearchReviewedDeals from "@/components/search-review-deals";
+import SearchPublishedDeals from "@/components/search-published-deals";
+import SearchStatusDeals from "@/components/search-status-deals";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -44,6 +47,10 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
   const ebitda = searchParams?.ebitda || "";
   const userId = searchParams?.userId || "";
   const showSeen = searchParams?.seen === "true" ? true : false;
+  const showReviewed = searchParams?.reviewed === "true" ? true : false;
+  const showPublished = searchParams?.published === "true" ? true : false;
+
+  const status = searchParams?.status || "";
 
   // Ensure dealTypes is always an array
   const dealTypes =
@@ -66,6 +73,9 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     industry,
     ebitdaMargin,
     showSeen,
+    showReviewed,
+    showPublished,
+    status: status as DealStatus,
   });
 
   const currentUserRole = await getCurrentUserRole();
@@ -130,9 +140,20 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchSeenDeals />
           </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchReviewedDeals />
+          </Suspense>
+
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchPublishedDeals />
+          </Suspense>
 
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchMaxEbitdaDeals />
+          </Suspense>
+
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchStatusDeals />
           </Suspense>
         </div>
       </div>
