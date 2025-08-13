@@ -21,8 +21,6 @@ import { auth } from "@/auth";
 const BulkUploadDealsToDB = async (deals: TransformedDeal[]) => {
   const userSession = await auth();
 
-  console.log("user session", userSession);
-
   if (!userSession) {
     return {
       error: "unauthorized user",

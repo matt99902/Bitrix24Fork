@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import NotificationPopover from "./NotificationPopover";
+
 type HeaderProps = {
   className?: string;
   session: Session | null;
@@ -91,7 +92,7 @@ const Header = ({ className, session }: HeaderProps) => {
           </div>
           <DesktopMenu pathname={pathname} dyanmicLinks={dynamicNavLinks} />
           <div className="flex items-center space-x-4">
-            <NotificationPopover userId={session?.user?.id as string} />
+            {/* <NotificationPopover userId={session?.user?.id as string} /> */}
 
             {session ? <ProfileMenu session={session} /> : <AuthDialogNavs />}
           </div>

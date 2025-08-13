@@ -8,7 +8,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { BellIcon, Clock, TrendingUp, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState, useTransition } from "react";
+import React, {
+  useEffect,
+  useState,
+  useTransition,
+  useCallback,
+  useRef,
+} from "react";
 import { ScrollArea } from "./ui/scroll-area";
 
 type PendingDeal = {
@@ -21,17 +27,39 @@ type PendingDeal = {
 const NotificationPopover = ({ userId }: { userId: string }) => {
   const [open, setOpen] = useState(false);
   const [deals, setDeals] = useState<PendingDeal[]>([]);
-
+  const [wsConnected, setWsConnected] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchDeals = useCallback(
+    () =>
+      fetch("/api/deals/pending")
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data: PendingDeal[]) => {
+          console.log("📊 Fetched deals:", data);
+          setDeals(data);
+        })
+        .catch((error) => {
+          console.error("❌ Error fetching deals:", error);
+        }),
+    [],
+  );
+
+  const fetchAndTransition = useCallback(() => {
+    startTransition(() => {
+      fetchDeals();
+    });
+  }, [fetchDeals]);
 
   useEffect(() => {
-    startTransition(() => {
-      fetch("/api/deals/pending")
-        .then((res) => res.json())
-        .then((data: PendingDeal[]) => setDeals(data))
-        .catch(console.error);
-    });
-  }, [open]);
+    if (open) fetchAndTransition();
+  }, [open, fetchAndTransition]);
 
   const formatEbitda = (ebitda: number) => {
     if (ebitda >= 1000000) {
@@ -42,59 +70,121 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
     return `$${ebitda.toLocaleString()}`;
   };
 
-  useEffect(() => {
-    const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_URL as string);
+  const connectWebSocket = useCallback(() => {
+    // Get WebSocket URL from environment or use default
+    const wsUrl =
+      process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:8080";
 
-    ws.onopen = () => {
-      console.log("✅ websocket connected");
+    try {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-      ws.send(
-        JSON.stringify({
-          type: "register",
-          userId,
-        }),
-      );
-    };
+      ws.onopen = () => {
+        console.log("✅ WebSocket connected");
+        setWsConnected(true);
 
-    ws.onmessage = (e) => {
-      console.log("received a websocket event");
-      console.log(e.data);
-
-      try {
-        const msg = JSON.parse(e.data);
-
-        if (msg.type === "problem_done") {
-          setDeals((prev) => {
-            const updatedDeals = prev.filter((d) => d.id !== msg.productId);
-
-            if (prev.length !== updatedDeals.length) {
-              console.log(
-                `Deal ${msg.productId} completed with status: ${msg.status}`,
-              );
-            }
-
-            return updatedDeals;
-          });
+        // Clear any existing reconnect timeout
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
         }
-      } catch (error) {
-        console.error("Error parsing websocket message:", error);
-      }
-    };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+        // Register the user
+        ws.send(
+          JSON.stringify({
+            type: "register",
+            userId,
+          }),
+        );
+      };
 
-    ws.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
+      ws.onmessage = (e) => {
+        console.log("📨 Received WebSocket message:", e.data);
+
+        try {
+          const msg = JSON.parse(e.data);
+
+          if (msg.type === "registered") {
+            console.log("✅ User registered with WebSocket server");
+          }
+
+          if (msg.type === "new_screen_call") {
+            console.log("🆕 New screen call received");
+            fetchAndTransition();
+          }
+
+          if (msg.type === "problem_done") {
+            console.log("✅ Problem done received:", msg);
+            setDeals((prev) => {
+              const updatedDeals = prev.filter((d) => d.id !== msg.productId);
+
+              if (prev.length !== updatedDeals.length) {
+                console.log(
+                  `Deal ${msg.productId} completed with status: ${msg.status}`,
+                );
+              }
+
+              return updatedDeals;
+            });
+          }
+        } catch (error) {
+          console.error("❌ Error parsing WebSocket message:", error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("❌ WebSocket error:", error);
+        setWsConnected(false);
+      };
+
+      ws.onclose = (event) => {
+        console.log(
+          "🔌 WebSocket connection closed:",
+          event.code,
+          event.reason,
+        );
+        setWsConnected(false);
+
+        // Attempt to reconnect after 3 seconds
+        if (event.code !== 1000) {
+          // Don't reconnect if it was a normal closure
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log("🔄 Attempting to reconnect WebSocket...");
+            connectWebSocket();
+          }, 3000);
+        }
+      };
+    } catch (error) {
+      console.error("❌ Failed to create WebSocket connection:", error);
+      setWsConnected(false);
+
+      // Attempt to reconnect after 5 seconds
+      reconnectTimeoutRef.current = setTimeout(() => {
+        console.log("🔄 Attempting to reconnect WebSocket...");
+        connectWebSocket();
+      }, 5000);
+    }
+  }, [userId, fetchAndTransition]);
+
+  useEffect(() => {
+    if (userId) {
+      connectWebSocket();
+    }
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      // Cleanup WebSocket connection
+      if (wsRef.current) {
+        wsRef.current.close(1000, "Component unmounting");
+        wsRef.current = null;
+      }
+
+      // Clear reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
     };
-  }, [userId]);
+  }, [userId, connectWebSocket]);
 
   return (
     <div className="relative">
@@ -110,6 +200,12 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
                 {deals.length > 99 ? "99+" : deals.length}
               </Badge>
             )}
+            <div
+              className={cn(
+                "absolute -bottom-0 -right-0 size-2 rounded-full",
+                wsConnected ? "bg-green-500" : "bg-red-500",
+              )}
+            />
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-0" align="end">
@@ -119,11 +215,19 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
                 <FileText className="size-4" />
                 Your Deals Queue
               </h5>
-              {deals.length > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {deals.length} pending
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {deals.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {deals.length} pending
+                  </Badge>
+                )}
+                <div
+                  className={cn(
+                    "size-2 rounded-full",
+                    wsConnected ? "bg-green-500" : "bg-red-500",
+                  )}
+                />
+              </div>
             </div>
           </div>
 
