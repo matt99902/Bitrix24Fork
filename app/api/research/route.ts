@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       tools: {
         getCompanyInfo: tool({
           description: "Get information about a company",
-          parameters: z.object({
+          inputSchema: z.object({
             companyName: z.string(),
           }),
           execute: async ({ companyName }) => {
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         }),
         getCompetitors: tool({
           description: "Get competitors of a company",
-          parameters: z.object({
+          inputSchema: z.object({
             companyName: z.string(),
           }),
           execute: async ({ companyName }) => {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         getPersonInfo: tool({
           description:
             "Get information (tweets, blog posts, linkedin profile) about a person",
-          parameters: z.object({
+          inputSchema: z.object({
             name: z.string(),
           }),
           execute: async ({ name: founderName }) => {
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
         }),
         assessFounderMarketFit: tool({
           description: "Assess the market fit of a founder",
-          parameters: z.object({
+          inputSchema: z.object({
             founderName: z.string(),
             companyInfo: z.string(),
           }),
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
         }),
         getFinancialInformation: tool({
           description: "Get financial information about a company",
-          parameters: z.object({
+          inputSchema: z.object({
             companyName: z.string(),
           }),
           execute: async ({ companyName }) => {
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         }),
         generateInvestmentPitch: tool({
           description: "Generate an investment pitch for a company",
-          parameters: z.object({
+          inputSchema: z.object({
             companyName: z.string(),
             companyInfo: z.string(),
             competitors: z.array(z.string()),
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toDataStreamResponse({
+    return result.toUIMessageStreamResponse({
       getErrorMessage: (error) => {
         if (NoSuchToolError.isInstance(error)) {
           console.log("NoSuchToolError", error);

@@ -37,7 +37,7 @@ const fetchCompetitorsFromWeb = async (company: string, n: number = 2) => {
     tools: {
       searchWeb: tool({
         description: "Search the web for information about a company",
-        parameters: z.object({
+        inputSchema: z.object({
           query: z.string().min(1).max(100).describe("The search query"),
         }),
         execute: async ({ query }) => {

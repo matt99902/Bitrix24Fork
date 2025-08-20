@@ -124,3 +124,23 @@ export const getDealPOC = async (dealId: string) => {
     throw new Error("Error fetching deal POC");
   }
 };
+
+/**
+ * Get all screeners
+ * @returns all screeners
+ */
+export async function getAllScreeners() {
+  try {
+    return await prismaDB.screener.findMany({
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching all screeners", error);
+    return null;
+  }
+}

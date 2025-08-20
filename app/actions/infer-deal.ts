@@ -2,7 +2,7 @@
 
 import { streamObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { createStreamableValue } from "ai/rsc";
+import { createStreamableValue } from '@ai-sdk/rsc';
 import { z } from "zod";
 import { InferDealSchemaType } from "../(protected)/import/InferDealComponent";
 import { InferDealSchema } from "@/components/schemas/infer-deal-schema";
@@ -16,7 +16,7 @@ export async function inferDealFromDescription(values: InferDealSchemaType) {
     const stream = createStreamableValue();
 
     (async () => {
-      const { partialObjectStream } = await streamObject({
+      const { partialObjectStream } = streamObject({
         model: openai("gpt-4o"),
         prompt: `generated a structured schema for a deal using the schema provided and the descirpiton given -> ${values.description}`,
 

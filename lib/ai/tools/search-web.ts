@@ -15,11 +15,11 @@ const searchWebUsingEXA = async (query: string) => {
   });
   return results.map(
     (r) =>
-      ({
+      (({
         title: r.title,
         url: r.url,
-        content: r.text,
-      }) as SearchResult,
+        content: r.text
+      }) as SearchResult),
   );
 };
 
@@ -38,7 +38,7 @@ const searchAndProcess = async (
     tools: {
       searchWeb: tool({
         description: "Search the web for information about a given query",
-        parameters: z.object({
+        inputSchema: z.object({
           query: z.string().min(1),
         }),
         async execute({ query }) {
@@ -49,7 +49,7 @@ const searchAndProcess = async (
       }),
       evaluate: tool({
         description: "Evaluate the search results",
-        parameters: z.object({}),
+        inputSchema: z.object({}),
         async execute() {
           const pendingResult = pendingSearchResults.pop()!;
           const { object: evaluation } = await generateObject({

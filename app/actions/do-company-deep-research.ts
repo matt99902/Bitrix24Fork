@@ -1,7 +1,7 @@
 "use server";
 
 import { streamText, tool } from "ai";
-import { createStreamableValue } from "ai/rsc";
+import { createStreamableValue } from '@ai-sdk/rsc';
 import { getCompetitors } from "@/lib/ai/tools/get-competitors";
 import { z } from "zod";
 import { getCompanyInfo } from "@/lib/ai/tools/company-info";
@@ -22,7 +22,7 @@ export async function generateCompanyDeepResearch(input: string) {
         tools: {
           getCompanyInfo: tool({
             description: "Get information about a company",
-            parameters: z.object({
+            inputSchema: z.object({
               companyName: z.string(),
             }),
             execute: async ({ companyName }) => {
@@ -31,7 +31,7 @@ export async function generateCompanyDeepResearch(input: string) {
           }),
           getCompetitors: tool({
             description: "Get competitors of a company",
-            parameters: z.object({
+            inputSchema: z.object({
               companyName: z.string(),
             }),
             execute: async ({ companyName }) => {
@@ -41,7 +41,7 @@ export async function generateCompanyDeepResearch(input: string) {
           getPersonInfo: tool({
             description:
               "Get information (tweets, blog posts, linkedin profile) about a person",
-            parameters: z.object({
+            inputSchema: z.object({
               name: z.string(),
             }),
             execute: async ({ name: founderName }) => {
@@ -50,7 +50,7 @@ export async function generateCompanyDeepResearch(input: string) {
           }),
           assessFounderMarketFit: tool({
             description: "Assess the market fit of a founder",
-            parameters: z.object({
+            inputSchema: z.object({
               founderName: z.string(),
               companyInfo: z.string(),
             }),
@@ -60,7 +60,7 @@ export async function generateCompanyDeepResearch(input: string) {
           }),
           getFinancialInformation: tool({
             description: "Get financial information about a company",
-            parameters: z.object({
+            inputSchema: z.object({
               companyName: z.string(),
             }),
             execute: async ({ companyName }) => {
@@ -69,7 +69,7 @@ export async function generateCompanyDeepResearch(input: string) {
           }),
           generateInvestmentPitch: tool({
             description: "Generate an investment pitch for a company",
-            parameters: z.object({
+            inputSchema: z.object({
               companyName: z.string(),
               companyInfo: z.string(),
               competitors: z.array(z.string()),

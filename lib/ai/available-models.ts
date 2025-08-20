@@ -11,8 +11,7 @@ export const google = createGoogleGenerativeAI({
 export const exa = new Exa(process.env.EXA_API_KEY);
 
 export const openai = createOpenAI({
-  apiKey: process.env.AI_API_KEY,
-  compatibility: "strict",
+  apiKey: process.env.AI_API_KEY
 });
 
 export const openaiClient = new OpenAI({

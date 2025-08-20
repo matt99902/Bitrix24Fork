@@ -6,8 +6,7 @@ import { z } from "zod";
 
 const openai = createOpenAI({
   // custom settings, e.g.
-  apiKey: process.env.AI_API_KEY,
-  compatibility: "strict", // strict mode, enable when using the OpenAI API
+  apiKey: process.env.AI_API_KEY
 });
 
 export default async function getNotifications(input: string) {

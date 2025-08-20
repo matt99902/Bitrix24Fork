@@ -211,7 +211,7 @@
 }
 
 * {
-  font-family: var(--font-lora);
+  font-family: var(--font-poppins);
 }
 
 h1,
@@ -222,7 +222,7 @@ span,
 p ul,
 li h5,
 h6 {
-  font-family: var(--font-lora);
+  font-family: var(--font-poppins);
 }
 
 @media screen and (max-width: 1024px) {
