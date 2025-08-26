@@ -4,6 +4,8 @@ import { TransformedDeal } from "../types";
 import prismaDB from "@/lib/prisma";
 import { DealType } from "@prisma/client";
 import { auth } from "@/auth";
+import { rateLimit } from "@/lib/redis";
+import { headers } from "next/headers";
 
 /**
  * Adds a list of transformed deals to Firebase.
@@ -21,6 +23,22 @@ const BulkUploadDealsToDB = async (deals: TransformedDeal[]) => {
   if (!userSession) {
     return {
       error: "unauthorized user",
+    };
+  }
+
+  const ip =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
+  const { ok, remaining, reset } = await rateLimit(
+    `api:bulk-upload-deal:${ip}`,
+    10, // 10 requests per minute
+    60_000, // 1 minute
+  );
+
+  if (!ok) {
+    console.log("Rate limit excedded for bulk upload db");
+
+    return {
+      error: "Too many requests",
     };
   }
 
