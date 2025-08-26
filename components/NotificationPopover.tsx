@@ -61,7 +61,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
   }, [fetchDeals]);
 
   useEffect(() => {
-    if (open) fetchAndTransition();
+    fetchAndTransition();
   }, [open, fetchAndTransition]);
 
   const formatEbitda = (ebitda: number) => {
