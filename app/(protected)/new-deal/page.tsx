@@ -26,14 +26,22 @@ const NewDealPage = async () => {
         </p>
       </div>
 
-      <div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2>Add Deal from Document</h2>
+          <p>
+            Add a new Deal to the Database by bulk importing or adding it
+            manually
+          </p>
+        </div>
+
         <Link href="/new-deal/document">
           <Button>Add Deal from Document</Button>
         </Link>
       </div>
 
       {/* Changed lg breakpoint to md for earlier responsiveness */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+      <div className="mt-6 grid grid-cols-1 gap-6 md:mt-8 md:grid-cols-2 md:gap-8 lg:mt-12">
         <BulkImportCard />
         <div className="h-fit rounded-lg border bg-muted p-6 shadow-lg">
           <h2 className="mb-4 text-center text-xl font-semibold">Infer Deal</h2>
