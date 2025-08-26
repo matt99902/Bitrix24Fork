@@ -1,11 +1,15 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
 import { useTransition } from "react";
-
-import { Loader2, EyeIcon, EyeOffIcon } from "lucide-react";
-
+import {
+  Loader2,
+  EyeIcon,
+  EyeOffIcon,
+  ClockIcon,
+  HistoryIcon,
+  ListIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SearchRecentDeals() {
@@ -44,11 +48,16 @@ export default function SearchRecentDeals() {
         disabled={isSearching}
       >
         {recent ? (
-          <EyeIcon className="mr-2 size-4" />
+          <>
+            <HistoryIcon className="mr-2 size-4" />
+            Showing Recent Deals
+          </>
         ) : (
-          <EyeOffIcon className="mr-2 size-4" />
+          <>
+            <ListIcon className="mr-2 size-4" />
+            Show Recent Deals
+          </>
         )}
-        {recent ? "Showing Recent Deals" : "Show recent Deals"}
       </Button>
     </div>
   );
