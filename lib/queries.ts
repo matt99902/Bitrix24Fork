@@ -144,3 +144,24 @@ export async function getAllScreeners() {
     return null;
   }
 }
+
+/**
+ * Get all screeners
+ * @returns all screeners
+ */
+export async function getAllScreenersWithContent() {
+  try {
+    return await prismaDB.screener.findMany({
+      select: {
+        id: true,
+        name: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching all screeners", error);
+    return null;
+  }
+}

@@ -16,10 +16,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const { dealListings } = await request.json();
+  const { dealListings, screenerId, screenerContent, screenerName } =
+    await request.json();
+  if (
+    !dealListings ||
+    !Array.isArray(dealListings) ||
+    dealListings.length === 0
+  ) {
+    return NextResponse.json(
+      { message: "Invalid deal listings" },
+      { status: 400 },
+    );
+  }
+
+  if (!screenerId || !screenerContent || !screenerName) {
+    console.log(
+      "screener information is not present inside screen all function",
+    );
+
+    return NextResponse.json({ message: "Invalid screener" }, { status: 400 });
+  }
+
   console.log("inside api route");
   console.log(dealListings);
-
+  console.log(screenerId);
   try {
     console.log("connecting to redis");
     // if (!redisClient.isOpen) {
@@ -45,7 +65,12 @@ export async function POST(request: Request) {
 
       await redisClient.lpush(
         "dealListings",
-        JSON.stringify(dealListingWithUserId),
+        JSON.stringify({
+          ...dealListingWithUserId,
+          screenerId,
+          screenerContent,
+          screenerName,
+        }),
       );
     });
 
