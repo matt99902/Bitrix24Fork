@@ -9,11 +9,11 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let raw: any[] = [];
+
   try {
-    // ensure connected
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
-    }
+    raw = await redisClient.lrange("dealListings", 0, -1);
+    console.log("raw", raw);
   } catch (error) {
     console.error("Error connecting to Redis:", error);
     return NextResponse.json(
@@ -23,8 +23,6 @@ export async function GET() {
   }
 
   try {
-    const raw = await redisClient.lRange("dealListings", 0, -1);
-
     // parse and filter by this user
     const all = raw
       .map((s) => {
