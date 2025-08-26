@@ -1,10 +1,8 @@
 "use server";
 
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { TransformedDeal } from "../types";
 import prismaDB from "@/lib/prisma";
-import { DealType, User } from "@prisma/client";
-import { withAuthServerAction } from "@/lib/withAuth";
+import { DealType } from "@prisma/client";
 import { auth } from "@/auth";
 
 /**
