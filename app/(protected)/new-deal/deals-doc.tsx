@@ -17,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Upload,
   FileText,
-  DollarSign,
   Building2,
   MapPin,
   Phone,
@@ -26,17 +25,31 @@ import {
   Loader2,
 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { InferRawDealsSchema } from "@/lib/zod-schemas/raw-deal-schema";
+import {
+  InferRawDealsSchema,
+  inferRawDealsSchema,
+} from "@/lib/zod-schemas/raw-deal-schema";
 import BulkUploadDealsToDB from "@/app/actions/bulk-upload-deal";
 import { toast } from "sonner";
+import { experimental_useObject as useObject } from "@ai-sdk/react";
 
 const DealsFromDoc = () => {
-  const [deals, setDeals] = useState<InferRawDealsSchema | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
 
-  const [isPending, startTransition] = useTransition();
+  const {
+    object,
+    isLoading,
+    submit: submitAnalysis,
+  } = useObject({
+    api: "/api/analyze",
+    schema: inferRawDealsSchema,
+  });
+
   const [isSavingDeals, startSavingDeals] = useTransition();
+
+  // Type assertion for the object to access listings safely
+  const typedObject = object as InferRawDealsSchema | null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,32 +60,40 @@ const DealsFromDoc = () => {
   };
 
   const handleSubmit = async (formData: FormData) => {
-    startTransition(async () => {
-      try {
-        setError(null);
-        setDeals(null);
+    try {
+      setError(null);
 
-        const response = await fetch("/api/analyze", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          console.log(response);
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setDeals(result);
-        console.log(result);
-
-        toast.success("Deals analyzed successfully");
-      } catch (error) {
-        console.error("Analysis failed:", error);
-        setError("Failed to analyze the document. Please try again.");
-        toast.error("Failed to analyze the document. Please try again.");
+      // Get the file from form data
+      const file = formData.get("pdf") as File;
+      if (!file) {
+        throw new Error("No file selected");
       }
-    });
+
+      // Convert file to base64 for the useObject hook
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const charArray = Array.from(uint8Array, (byte) =>
+        String.fromCharCode(byte),
+      );
+      const binaryString = charArray.join("");
+      const base64Data = btoa(binaryString);
+
+      // Create the data object that useObject expects
+      const fileData = {
+        pdf: {
+          name: file.name,
+          data: `data:application/pdf;base64,${base64Data}`,
+          type: file.type,
+        },
+      };
+
+      // Use the submit function from useObject hook with the file data
+      await submitAnalysis(fileData);
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      setError("Failed to analyze the document. Please try again.");
+      toast.error("Failed to analyze the document. Please try again.");
+    }
   };
 
   const formatCurrency = (amount: number | undefined) => {
@@ -89,14 +110,13 @@ const DealsFromDoc = () => {
     startSavingDeals(async () => {
       try {
         console.log("Saving deals");
-        if (!deals) {
+        if (!typedObject?.listings) {
           throw new Error("No deals to save");
         }
 
-        const response = await BulkUploadDealsToDB(deals.listings);
+        const response = await BulkUploadDealsToDB(typedObject.listings);
         console.log(response);
         toast.success(response.success);
-        setDeals(null);
         setFileName("");
         setError(null);
       } catch (error) {
@@ -141,8 +161,8 @@ const DealsFromDoc = () => {
                   onChange={handleFileChange}
                   className="flex-1"
                 />
-                <Button type="submit" disabled={isPending || !fileName}>
-                  {isPending ? (
+                <Button type="submit" disabled={isLoading || !fileName}>
+                  {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Analyzing...
@@ -171,7 +191,7 @@ const DealsFromDoc = () => {
         </Alert>
       )}
 
-      {isPending && (
+      {isLoading && (
         <Card>
           <CardHeader>
             <CardTitle>Analyzing Document...</CardTitle>
@@ -191,13 +211,13 @@ const DealsFromDoc = () => {
         </Card>
       )}
 
-      {deals && (
+      {typedObject?.listings && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-semibold">Extracted Deals</h2>
               <Badge variant="secondary">
-                {deals.listings.length} deals found
+                {typedObject.listings.length} deals found
               </Badge>
             </div>
           </div>
@@ -215,7 +235,7 @@ const DealsFromDoc = () => {
             </Button>
           </div>
 
-          {deals.listings.length === 0 ? (
+          {typedObject.listings.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center text-muted-foreground">
@@ -230,7 +250,7 @@ const DealsFromDoc = () => {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {deals.listings.map((deal, index) => (
+              {typedObject.listings.map((deal: any, index: number) => (
                 <Card key={index} className="transition-shadow hover:shadow-md">
                   <CardHeader>
                     <div className="flex items-start justify-between">

@@ -2,9 +2,9 @@ import { auth } from "@/auth";
 import { rateLimit } from "@/lib/redis";
 import { inferRawDealsSchema } from "@/lib/zod-schemas/raw-deal-schema";
 import { openai } from "@ai-sdk/openai";
-import { generateObject } from "ai";
+import { streamObject } from "ai";
 
-export const runtime = "nodejs";
+export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const userSession = await auth();
@@ -34,21 +34,68 @@ export async function POST(request: Request) {
     });
   }
 
-  const formData = await request.formData();
-  const file = formData.get("pdf") as File;
-
-  const arrayBuffer = await file.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
-
-  const charArray = Array.from(uint8Array, (byte) => String.fromCharCode(byte));
-  const binaryString = charArray.join("");
-  const base64Data = btoa(binaryString);
-  const fileDataUrl = `data:application/pdf;base64,${base64Data}`;
+  let file: File | null = null;
+  const contentType = request.headers.get("content-type") || "";
 
   try {
+    if (contentType.includes("multipart/form-data")) {
+      // Handle multipart form data
+      const formData = await request.formData();
+      file = formData.get("pdf") as File;
+    } else if (contentType.includes("application/json")) {
+      // Handle JSON request (useObject hook might send this)
+      const jsonData = await request.json();
+
+      // Check if the file data is in the JSON payload
+      if (jsonData.pdf && jsonData.pdf.data) {
+        // Extract file data from JSON
+        const fileData = jsonData.pdf.data;
+        const fileName = jsonData.pdf.name || "document.pdf";
+
+        // Convert base64 to Uint8Array
+        const binaryString = atob(fileData.split(",")[1]);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Create a File object
+        file = new File([bytes], fileName, { type: "application/pdf" });
+      } else {
+        return Response.json(
+          { error: "No PDF file data found in request" },
+          { status: 400 },
+        );
+      }
+    } else {
+      return Response.json(
+        {
+          error:
+            "Unsupported content type. Expected multipart/form-data or application/json",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!file) {
+      return Response.json({ error: "No PDF file provided" }, { status: 400 });
+    }
+
+    console.log("File received:", file.name, "Size:", file.size);
+
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    const charArray = Array.from(uint8Array, (byte) =>
+      String.fromCharCode(byte),
+    );
+    const binaryString = charArray.join("");
+    const base64Data = btoa(binaryString);
+    const fileDataUrl = `data:application/pdf;base64,${base64Data}`;
+
     console.log("Starting AI analysis for PDF...");
 
-    const result = await generateObject({
+    const result = await streamObject({
       model: openai("gpt-4o"),
       system: `You are a specialized business deal analyst. Your task is to extract and analyze business deals from PDF documents containing deal listings.
 
@@ -96,18 +143,7 @@ Return ONLY the array of deals in the exact format specified by the schema, ensu
       schema: inferRawDealsSchema,
     });
 
-    console.log("AI analysis completed successfully");
-    console.log("Result object:", JSON.stringify(result, null, 2));
-
-    if (!result.object) {
-      console.error("AI result missing object property:", result);
-      return Response.json(
-        { error: "AI analysis failed - no result object" },
-        { status: 500 },
-      );
-    }
-
-    return Response.json(result.object);
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Error during AI analysis:", error);
     console.error("Error details:", {
