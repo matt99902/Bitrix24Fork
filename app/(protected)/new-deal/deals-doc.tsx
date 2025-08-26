@@ -193,20 +193,12 @@ const DealsFromDoc = () => {
 
       {isLoading && (
         <Card>
-          <CardHeader>
-            <CardTitle>Analyzing Document...</CardTitle>
-            <CardDescription>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
+            <p className="text-lg font-medium">Generating...</p>
+            <p className="mt-2 text-sm text-muted-foreground">
               Extracting business deals from your PDF
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-            ))}
+            </p>
           </CardContent>
         </Card>
       )}
