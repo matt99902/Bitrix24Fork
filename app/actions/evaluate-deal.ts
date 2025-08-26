@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/auth";
 import { openai, openaiClient } from "@/lib/ai/available-models";
 import prismaDB from "@/lib/prisma";
 import { splitContentIntoChunks } from "@/lib/utils";
@@ -13,6 +14,17 @@ import { z } from "zod";
  * @returns The evaluation result
  */
 export async function evaluateDeal(dealId: string, screenerId: string) {
+  const userSession = await auth();
+
+  if (!userSession) {
+    console.log("user session is not available");
+
+    return {
+      success: false,
+      error: "Unauthorized",
+    };
+  }
+
   const fetchedDealInformation = await prismaDB.deal.findFirst({
     where: {
       id: dealId,
