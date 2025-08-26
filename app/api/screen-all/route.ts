@@ -22,9 +22,9 @@ export async function POST(request: Request) {
 
   try {
     console.log("connecting to redis");
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
-    }
+    // if (!redisClient.isOpen) {
+    //   await redisClient.connect();
+    // }
     console.log("connected to redis");
   } catch (error) {
     console.error("Error connecting to Redis:", error);
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         userId: userSession.user.id,
       };
 
-      await redisClient.lPush(
+      await redisClient.lpush(
         "dealListings",
         JSON.stringify(dealListingWithUserId),
       );
