@@ -4,6 +4,8 @@ import { inferRawDealsSchema } from "@/lib/zod-schemas/raw-deal-schema";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const userSession = await auth();
 
@@ -43,9 +45,12 @@ export async function POST(request: Request) {
   const base64Data = btoa(binaryString);
   const fileDataUrl = `data:application/pdf;base64,${base64Data}`;
 
-  const result = await generateObject({
-    model: openai("gpt-4o"),
-    system: `You are a specialized business deal analyst. Your task is to extract and analyze business deals from PDF documents containing deal listings.
+  try {
+    console.log("Starting AI analysis for PDF...");
+
+    const result = await generateObject({
+      model: openai("gpt-4o"),
+      system: `You are a specialized business deal analyst. Your task is to extract and analyze business deals from PDF documents containing deal listings.
 
 IMPORTANT GUIDELINES:
 - Focus ONLY on business deals, business listings, or business opportunities
@@ -72,24 +77,51 @@ DEAL EXTRACTION RULES:
 - NEVER return null values - use appropriate defaults (empty strings for text, 0 for numbers, empty arrays for tags)
 
 Return ONLY the array of deals in the exact format specified by the schema, ensuring all required fields are present and no null values exist.`,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Analyze this PDF and extract all business deals, business listings, or business opportunities. Focus only on deals that are for sale, acquisition, or investment. Ignore any other content. Extract each deal according to the specified schema and return them as an array. Remember: never return null values - use empty strings for missing text, 0 for missing numbers, and empty arrays for missing tags.",
-          },
-          {
-            type: "file",
-            data: fileDataUrl,
-            mediaType: "application/pdf",
-          },
-        ],
-      },
-    ],
-    schema: inferRawDealsSchema,
-  });
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this PDF and extract all business deals, business listings, or business opportunities. Focus only on deals that are for sale, acquisition, or investment. Ignore any other content. Extract each deal according to the specified schema and return them as an array. Remember: never return null values - use empty strings for missing text, 0 for missing numbers, and empty arrays for missing tags.",
+            },
+            {
+              type: "file",
+              data: fileDataUrl,
+              mediaType: "application/pdf",
+            },
+          ],
+        },
+      ],
+      schema: inferRawDealsSchema,
+    });
 
-  return Response.json(result.object);
+    console.log("AI analysis completed successfully");
+    console.log("Result object:", JSON.stringify(result, null, 2));
+
+    if (!result.object) {
+      console.error("AI result missing object property:", result);
+      return Response.json(
+        { error: "AI analysis failed - no result object" },
+        { status: 500 },
+      );
+    }
+
+    return Response.json(result.object);
+  } catch (error) {
+    console.error("Error during AI analysis:", error);
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    });
+
+    return Response.json(
+      {
+        error: "AI analysis failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 }
