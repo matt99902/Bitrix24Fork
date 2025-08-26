@@ -24,6 +24,13 @@ type PendingDeal = {
   status: string;
 };
 
+type WebSocketMessage = {
+  type: string;
+  productId?: string;
+  status?: string;
+  userId?: string;
+};
+
 const NotificationPopover = ({ userId }: { userId: string }) => {
   const [open, setOpen] = useState(false);
   const [deals, setDeals] = useState<PendingDeal[]>([]);
@@ -31,25 +38,21 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
   const [isPending, startTransition] = useTransition();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isConnectingRef = useRef(false);
 
-  const fetchDeals = useCallback(
-    () =>
-      fetch("/api/deals/pending")
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data: PendingDeal[]) => {
-          console.log("📊 Fetched deals:", data);
-          setDeals(data);
-        })
-        .catch((error) => {
-          console.error("❌ Error fetching deals:", error);
-        }),
-    [],
-  );
+  const fetchDeals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/deals/pending");
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data: PendingDeal[] = await res.json();
+      console.log("📊 Fetched deals:", data);
+      setDeals(data);
+    } catch (error) {
+      console.error("❌ Error fetching deals:", error);
+    }
+  }, []);
 
   const fetchAndTransition = useCallback(() => {
     startTransition(() => {
@@ -71,6 +74,16 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
   };
 
   const connectWebSocket = useCallback(() => {
+    // Prevent multiple simultaneous connection attempts
+    if (
+      isConnectingRef.current ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
+      return;
+    }
+
+    isConnectingRef.current = true;
+
     // Get WebSocket URL from environment or use default
     const wsUrl =
       process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:8080";
@@ -82,6 +95,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
       ws.onopen = () => {
         console.log("✅ WebSocket connected");
         setWsConnected(true);
+        isConnectingRef.current = false;
 
         // Clear any existing reconnect timeout
         if (reconnectTimeoutRef.current) {
@@ -102,7 +116,13 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
         console.log("📨 Received WebSocket message:", e.data);
 
         try {
-          const msg = JSON.parse(e.data);
+          const msg: WebSocketMessage = JSON.parse(e.data);
+
+          // Validate message structure
+          if (!msg || typeof msg.type !== "string") {
+            console.warn("⚠️ Invalid WebSocket message format:", msg);
+            return;
+          }
 
           if (msg.type === "registered") {
             console.log("✅ User registered with WebSocket server");
@@ -113,18 +133,17 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
             fetchAndTransition();
           }
 
-          if (msg.type === "problem_done") {
+          if (msg.type === "problem_done" && msg.productId) {
             console.log("✅ Problem done received:", msg);
             setDeals((prev) => {
-              const updatedDeals = prev.filter((d) => d.id !== msg.productId);
-
-              if (prev.length !== updatedDeals.length) {
+              const dealExists = prev.some((d) => d.id === msg.productId);
+              if (dealExists) {
                 console.log(
-                  `Deal ${msg.productId} completed with status: ${msg.status}`,
+                  `Deal ${msg.productId} completed with status: ${msg.status || "unknown"}`,
                 );
+                return prev.filter((d) => d.id !== msg.productId);
               }
-
-              return updatedDeals;
+              return prev;
             });
           }
         } catch (error) {
@@ -135,6 +154,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
       ws.onerror = (error) => {
         console.error("❌ WebSocket error:", error);
         setWsConnected(false);
+        isConnectingRef.current = false;
       };
 
       ws.onclose = (event) => {
@@ -144,10 +164,10 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
           event.reason,
         );
         setWsConnected(false);
+        isConnectingRef.current = false;
 
-        // Attempt to reconnect after 3 seconds
-        if (event.code !== 1000) {
-          // Don't reconnect if it was a normal closure
+        // Attempt to reconnect after 3 seconds, but only if not a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
           reconnectTimeoutRef.current = setTimeout(() => {
             console.log("🔄 Attempting to reconnect WebSocket...");
             connectWebSocket();
@@ -157,6 +177,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
     } catch (error) {
       console.error("❌ Failed to create WebSocket connection:", error);
       setWsConnected(false);
+      isConnectingRef.current = false;
 
       // Attempt to reconnect after 5 seconds
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -164,7 +185,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
         connectWebSocket();
       }, 5000);
     }
-  }, [userId, fetchAndTransition]);
+  }, [userId]); // Removed fetchAndTransition dependency
 
   useEffect(() => {
     if (userId) {
@@ -183,8 +204,11 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+
+      // Reset connection state
+      isConnectingRef.current = false;
     };
-  }, [userId, connectWebSocket]);
+  }, [userId]); // Removed connectWebSocket dependency to prevent infinite loops
 
   return (
     <div className="relative">
@@ -241,7 +265,21 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
               </div>
             )}
 
-            {deals.length === 0 && !isPending && (
+            {!wsConnected && !isPending && (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="mb-3 size-12 rounded-full bg-red-100 p-2 dark:bg-red-900/20">
+                  <div className="size-8 rounded-full bg-red-500"></div>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Connection lost
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Attempting to reconnect...
+                </p>
+              </div>
+            )}
+
+            {deals.length === 0 && !isPending && wsConnected && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Clock className="mb-3 size-12 text-muted-foreground/50" />
                 <p className="text-sm font-medium text-muted-foreground">
