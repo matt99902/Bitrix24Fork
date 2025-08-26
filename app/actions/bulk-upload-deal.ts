@@ -1,6 +1,5 @@
 "use server";
 
-import { db } from "@/lib/firebase/init";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { TransformedDeal } from "../types";
 import prismaDB from "@/lib/prisma";
