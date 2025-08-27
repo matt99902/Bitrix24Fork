@@ -93,7 +93,7 @@ const Header = ({ className, session }: HeaderProps) => {
           </div>
           <DesktopMenu pathname={pathname} dyanmicLinks={dynamicNavLinks} />
           <div className="flex items-center space-x-4">
-            <NotificationPopover userId={session?.user?.id as string} />
+            {/* <NotificationPopover userId={session?.user?.id as string} /> */}
 
             {session ? <ProfileMenu session={session} /> : <AuthDialogNavs />}
           </div>
