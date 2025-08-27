@@ -173,6 +173,7 @@ enum SIMStatus {
 model Screener {
   id          String        @id @default(cuid())
   name        String
+  description String?
   content     String
   fileUrl     String
   createdAt   DateTime      @default(now())
