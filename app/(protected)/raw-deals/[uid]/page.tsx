@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
+import PerformRolloutDialog from "@/components/Dialogs/perform-rollout-dialog";
 import { Metadata } from "next";
 import {
   Edit,
@@ -82,7 +83,7 @@ export default async function ManualDealSpecificPage(props: {
   const { uid } = await props.params;
   const userSession = await auth();
 
-  if (!userSession) redirect("/login");
+  // if (!userSession) redirect("/login");
 
   const fetchedDeal = await prismaDB.deal.findUnique({
     where: {
@@ -247,6 +248,7 @@ export default async function ManualDealSpecificPage(props: {
             <Edit className="mr-2 h-4 w-4" /> Edit Deal
           </Link>
         </Button>
+         <PerformRolloutDialog />
         {bitrixId ? (
           <Badge variant="outline">
             <CheckCircle className="mr-2 h-4 w-4" /> Deal Published to Bitrix

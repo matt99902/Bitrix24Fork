@@ -25,6 +25,7 @@ import SearchStatusDeals from "@/components/search-status-deals";
 import SearchTagsDeals from "@/components/search-tags-deals";
 import DeleteFiltersButton from "@/components/Buttons/delete-filters-button";
 
+
 export const metadata: Metadata = {
   title: "Raw Deals",
   description: "View the raw deals",
