@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
-import PerformRolloutDialog from "@/components/Dialogs/perform-rollout-dialog";
+import { PerformRollupDialog } from "@/components/Dialogs/perform-rollup-dialog";
 import { Metadata } from "next";
 import {
   Edit,
@@ -243,7 +243,7 @@ export default async function ManualDealSpecificPage(props: {
             <Edit className="mr-2 h-4 w-4" /> Edit Deal
           </Link>
         </Button>
-         <PerformRolloutDialog />
+         <PerformRollupDialog />
         {bitrixId ? (
           <Badge variant="outline">
             <CheckCircle className="mr-2 h-4 w-4" /> Deal Published to Bitrix
