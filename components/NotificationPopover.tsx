@@ -92,9 +92,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
       try {
         const msg: WebSocketMessage = JSON.parse(e.data);
         if (msg.type === "new_screen_call") fetchAndTransition();
-        if (msg.type === "problem_done" && msg.productId) {
-          setDeals((prev) => prev.filter((d) => d.id !== msg.productId));
-        }
+        if (msg.type === "problem_done" && msg.productId) fetchAndTransition();
       } catch {}
     };
     const scheduleReconnect = () => {
@@ -129,6 +127,12 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
       retryDelayRef.current = 1000;
     };
   }, [userId, connectWebSocket]);
+
+  useEffect(() => {
+    const onFocus = () => fetchAndTransition();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchAndTransition]);
 
   return (
     <div className="relative">
