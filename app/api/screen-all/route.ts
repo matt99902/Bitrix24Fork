@@ -11,13 +11,14 @@ export async function POST(request: Request) {
         message: "Unauthorized",
       },
       {
-        status: 400,
+        status: 401,
       },
     );
   }
 
   const { dealListings, screenerId, screenerContent, screenerName } =
     await request.json();
+
   if (
     !dealListings ||
     !Array.isArray(dealListings) ||
@@ -37,56 +38,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Invalid screener" }, { status: 400 });
   }
 
-  console.log("inside api route");
-  console.log(dealListings);
-  console.log(screenerId);
   try {
-    console.log("connecting to redis");
-    // if (!redisClient.isOpen) {
-    //   await redisClient.connect();
-    // }
-    console.log("connected to redis");
+    // Enqueue each deal (await to ensure completion before publish)
+    for (const dealListing of dealListings) {
+      const payload = {
+        ...dealListing,
+        userId: userSession.user.id,
+        screenerId,
+        screenerContent,
+        screenerName,
+      };
+      await redisClient.rpush("dealListings", JSON.stringify(payload));
+    }
+
+    // Notify via pub/sub that new items are available for this user
+    await redisClient.publish(
+      "new_screen_call",
+      JSON.stringify({ userId: userSession.user.id }),
+    );
+
+    return NextResponse.json({ message: "Enqueued" });
   } catch (error) {
-    console.error("Error connecting to Redis:", error);
+    console.error("Error enqueuing deals:", error);
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 },
     );
   }
-
-  try {
-    console.log("pushing all the deals to bitrix");
-
-    dealListings.forEach(async (dealListing: any) => {
-      const dealListingWithUserId = {
-        ...dealListing,
-        userId: userSession.user.id,
-      };
-
-      await redisClient.lpush(
-        "dealListings",
-        JSON.stringify({
-          ...dealListingWithUserId,
-          screenerId,
-          screenerContent,
-          screenerName,
-        }),
-      );
-    });
-
-    // publish the message that a new screening call request was made
-    await redisClient.publish(
-      "new_screen_call",
-      JSON.stringify({
-        userId: userSession.user.id,
-      }),
-    );
-  } catch (error) {
-    console.error("Error pushing to Redis:", error);
-    return NextResponse.json({ message: "Error pushing to Redis" });
-  }
-
-  return NextResponse.json({
-    message: "Products successfully pushed on to the backend",
-  });
 }
