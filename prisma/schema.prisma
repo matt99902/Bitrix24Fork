@@ -25,7 +25,7 @@ model User {
   isBlocked     Boolean         @default(false)
   UserActionLog UserActionLog[]
   Deal          Deal[]
-  Rollups       Rollup[]
+  Rollups       Rollup[]        @relation("UserRollups")
 }
 
 model Account {
@@ -227,10 +227,9 @@ model Rollup {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Each rollup can include multiple deals
+  
   deals Deal[] @relation("RollupDeals")
 
-  // Optional user who created the rollup
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
+ 
+  users User[] @relation("UserRollups")
 }

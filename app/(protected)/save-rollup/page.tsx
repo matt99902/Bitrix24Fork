@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
+import { toast } from "sonner";
+import SaveRollupDialog from "@/components/Dialogs/save-rollup-dialog";
 
 // Simplified placeholder type
 interface PlaceholderDeal {
@@ -23,6 +26,8 @@ interface PlaceholderDeal {
 
 export default function RollupPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
 
   // Placeholder deals
   const [deals, setDeals] = useState<PlaceholderDeal[]>([
@@ -83,14 +88,31 @@ export default function RollupPage() {
   };
 
   const deleteSelected = () => {
+    if (userRole !== "ADMIN") {
+      toast.error("Only admins can delete deals from a rollup.");
+      return;
+    }
+
     setDeals((prev) => prev.filter((deal) => !selectedDeals.has(deal.id)));
     setSelectedDeals(new Set());
+    toast.success("Selected deals deleted.");
   };
 
-  const saveSelected = () => {
-    const selected = deals.filter((deal) => selectedDeals.has(deal.id));
-    console.log("Saving Rollup for deals:", selected);
-    alert(`Saved ${selected.length} deal(s)!`);
+  const handleSaveRollup = (name: string, description: string) => {
+    if (userRole !== "ADMIN") {
+      toast.error("Only admins can save a rollup.");
+      return;
+    }
+
+    if (selectedDeals.size === 0) {
+      toast.error("Please select at least one deal to save a rollup.");
+      return;
+    }
+
+    const selected = deals.filter((d) => selectedDeals.has(d.id));
+    // TODO: send to API instead of console
+    console.log("Saving Rollup:", { name, description, deals: selected });
+    toast.success(`Rollup "${name}" saved with ${selected.length} deals!`);
   };
 
   return (
@@ -144,9 +166,9 @@ export default function RollupPage() {
         <Button variant="destructive" onClick={deleteSelected}>
           Delete Selected
         </Button>
-        <Button variant="secondary" onClick={saveSelected}>
-          Save Rollup
-        </Button>
+
+        {}
+        <SaveRollupDialog onSave={handleSaveRollup} />
       </div>
     </div>
   );

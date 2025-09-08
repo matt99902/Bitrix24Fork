@@ -79,7 +79,7 @@ export function PerformRollup() {
     setIsLoading(true);
 
     setTimeout(() => {
-      router.push("/rollup");
+      router.push("/save-rollup");
     }, 1500);
   };
 
