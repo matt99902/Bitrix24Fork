@@ -3,7 +3,9 @@ import { pubSubClient } from "@/lib/pubsub-client";
 import { redisClient } from "@/lib/redis";
 import { NextResponse } from "next/server";
 
-const topicName = process.env.PUBSUB_TOPIC_NAME;
+// const topicName = process.env.PUBSUB_TOPIC_NAME;
+
+const WORKER_URL = process.env.WORKER_URL;
 
 export async function POST(request: Request) {
   const userSession = await auth();
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
 
   try {
     // We'll collect all the publish promises to run them in parallel
-    const publishPromises: Promise<string>[] = [];
+    // const publishPromises: Promise<string>[] = [];
 
     // Enqueue each deal (await to ensure completion before publish)
     for (const dealListing of dealListings) {
@@ -54,25 +56,30 @@ export async function POST(request: Request) {
         screenerContent,
         screenerName,
       };
-      // await redisClient.rpush("dealListings", JSON.stringify(payload));
+      await redisClient.rpush("dealListings", JSON.stringify(payload));
 
-      const dataBuffer = Buffer.from(JSON.stringify(payload));
-      const publishPromise = pubSubClient
-        .topic(topicName!)
-        .publishMessage({ data: dataBuffer });
+      // const dataBuffer = Buffer.from(JSON.stringify(payload));
+      // const publishPromise = pubSubClient
+      //   .topic(topicName!)
+      //   .publishMessage({ data: dataBuffer });
 
-      publishPromises.push(publishPromise);
+      // publishPromises.push(publishPromise);
     }
 
     // Notify via pub/sub that new items are available for this user
-    // await redisClient.publish(
-    //   "new_screen_call",
-    //   JSON.stringify({ userId: userSession.user.id }),
-    // );
+    await redisClient.publish(
+      "new_screen_call",
+      JSON.stringify({ userId: userSession.user.id }),
+    );
 
     // Await all messages to be published
     console.log("before promise.all");
-    await Promise.all(publishPromises);
+    // await Promise.all(publishPromises);
+
+    fetch(`${WORKER_URL}/process-queue`, { method: "POST" }).catch((err) => {
+      console.error("Failed to trigger worker:", err.message);
+      // You might want to add more robust error handling/logging here
+    });
 
     console.log("all promises ran successfully");
 
