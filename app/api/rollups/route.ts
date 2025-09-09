@@ -31,11 +31,11 @@ export async function POST(request: Request) {
       data: {
         name,
         description,
-        user: { connect: { id: userSession.user.id } }, // single user
+        users: { connect: { id: userSession.user.id } }, // connect current user
         deals: { connect: dealIds.map((id) => ({ id })) },
       },
       include: {
-        user: true,
+        users: true,
         deals: true,
       },
     });
@@ -50,22 +50,18 @@ export async function POST(request: Request) {
   }
 }
 
-// GET all rollups for the current user
+// GET all rollups in the database
 export async function GET() {
-  const userSession = await auth();
-
-  if (!userSession) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+   const userSession = await auth();
+   if (!userSession) {
+     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
 
   try {
     const rollups = await prisma.rollup.findMany({
-      where: {
-        userId: userSession.user.id, 
-      },
       include: {
-        user: true,
-        deals: true,
+        users: true,
+        deals: true, 
       },
       orderBy: {
         createdAt: "desc",

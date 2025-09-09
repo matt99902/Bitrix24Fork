@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
+import { toast } from "sonner";
 
 interface Deal {
   id: string;
@@ -12,6 +13,18 @@ interface Deal {
   revenue: number;
   ebitda: number;
   industry: string;
+  score?: number;
+  bitrixStatus?: string;
+  business_strategy?: string;
+  growth_stage?: string;
+  dealTeaser?: string;
+  chunk_text?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  linkedinUrl?: string;
+  workPhone?: string;
+  sourceWebsite?: string;
 }
 
 interface Rollup {
@@ -21,7 +34,7 @@ interface Rollup {
   createdAt: string;
   updatedAt: string;
   deals: Deal[];
-  users: { id: string; name?: string | null; email: string }[];
+  users: { id: string; name?: string | null; email: string; role?: string }[];
 }
 
 export default function ViewRollupsPage() {
@@ -31,10 +44,6 @@ export default function ViewRollupsPage() {
   useEffect(() => {
     async function fetchRollups() {
       try {
-        // Uncomment the following lines to enforce login
-        // const userSession = await fetch("/api/auth/session").then(res => res.json());
-        // if (!userSession) return;
-
         const res = await fetch("/api/rollups");
         const data = await res.json();
         setRollups(data.rollups || []);
@@ -44,17 +53,33 @@ export default function ViewRollupsPage() {
         setLoading(false);
       }
     }
-
     fetchRollups();
   }, []);
 
-  if (loading) {
-    return <div className="p-6">Loading rollups...</div>;
+  async function handleDelete(rollupId: string, userRole?: string) {
+    if (userRole !== "ADMIN") {
+      toast.error("Only admins can delete rollups.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/rollups/${rollupId}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Rollup deleted successfully!");
+        setRollups((prev) => prev.filter((r) => r.id !== rollupId));
+      } else {
+        toast.error(data.error || "Failed to delete rollup.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete rollup.");
+    }
   }
 
-  if (!rollups.length) {
-    return <div className="p-6">No rollups found.</div>;
-  }
+  if (loading) return <div className="p-6">Loading rollups...</div>;
+  if (!rollups.length) return <div className="p-6">No rollups found.</div>;
 
   return (
     <div className="p-6">
@@ -75,27 +100,76 @@ export default function ViewRollupsPage() {
                 {new Date(rollup.createdAt).toLocaleDateString()}
               </span>
             </div>
+
             {rollup.description && (
               <p className="mb-2 text-sm text-muted-foreground">
                 {rollup.description}
               </p>
             )}
+
             <div className="mb-2">
               <strong>Deals in this rollup:</strong>
               <ul className="mt-1 ml-4 list-disc text-sm text-muted-foreground">
                 {rollup.deals.map((deal) => (
-                  <li key={deal.id}>
-                    {deal.title || deal.dealCaption} - {deal.brokerage} - $
-                    {deal.revenue.toLocaleString()} Revenue / $
-                    {deal.ebitda.toLocaleString()} EBITDA
+                  <li key={deal.id} className="mb-1">
+                    <div className="font-semibold">
+                      {deal.title || deal.dealCaption}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Brokerage: {deal.brokerage} | Revenue: ${deal.revenue.toLocaleString()} | EBITDA: ${deal.ebitda.toLocaleString()} | Industry: {deal.industry}
+                    </div>
+                    {deal.score !== undefined && (
+                      <div className="text-sm text-muted-foreground">
+                        Score: {(deal.score * 100).toFixed(0)}%
+                      </div>
+                    )}
+                    {deal.bitrixStatus && (
+                      <div className="text-sm text-muted-foreground">
+                        Status: {deal.bitrixStatus}
+                      </div>
+                    )}
+                    {(deal.business_strategy || deal.growth_stage) && (
+                      <div className="text-sm text-muted-foreground">
+                        Strategy: {deal.business_strategy || "—"} | Growth: {deal.growth_stage || "—"}
+                      </div>
+                    )}
+                    {(deal.dealTeaser || deal.chunk_text) && (
+                      <div className="text-sm text-muted-foreground">
+                        {deal.dealTeaser || deal.chunk_text}
+                      </div>
+                    )}
+                    {(deal.firstName || deal.lastName || deal.email || deal.linkedinUrl || deal.workPhone) && (
+                      <div className="text-sm text-muted-foreground">
+                        Contact: {deal.firstName || ""} {deal.lastName || ""} | {deal.email || "—"} | {deal.linkedinUrl ? <a href={deal.linkedinUrl} className="text-blue-500 underline">LinkedIn</a> : "—"} | {deal.workPhone || "—"}
+                      </div>
+                    )}
+                    {deal.sourceWebsite && (
+                      <div className="text-sm text-muted-foreground">
+                        Source: <a href={deal.sourceWebsite} className="text-blue-500 underline">{deal.sourceWebsite}</a>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="flex gap-2 text-sm text-muted-foreground">
+
+            <div className="flex gap-2 text-sm text-muted-foreground mb-2">
               <strong>Saved by:</strong>{" "}
               {rollup.users.map((user) => user.name || user.email).join(", ")}
             </div>
+
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() =>
+                handleDelete(
+                  rollup.id,
+                  rollup.users[0]?.role // demo; ideally use logged-in user's role
+                )
+              }
+            >
+              Delete Rollup
+            </Button>
           </div>
         ))}
       </div>
