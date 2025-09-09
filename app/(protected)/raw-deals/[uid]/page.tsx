@@ -83,7 +83,7 @@ export default async function ManualDealSpecificPage(props: {
   const { uid } = await props.params;
   const userSession = await auth();
 
-  // if (!userSession) redirect("/login");
+   if (!userSession) redirect("/login");
 
   const fetchedDeal = await prismaDB.deal.findUnique({
     where: {
