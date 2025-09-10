@@ -37,23 +37,49 @@ interface Rollup {
   users: { id: string; name?: string | null; email: string; role?: string }[];
 }
 
+interface UserSession {
+  id: string;
+  name?: string | null;
+  email: string;
+  role?: string;
+}
+
 export default function ViewRollupsPage() {
   const [rollups, setRollups] = useState<Rollup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
 
   useEffect(() => {
-    async function fetchRollups() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/rollups");
-        const data = await res.json();
-        setRollups(data.rollups || []);
+        // Fetch all rollups
+        const resRollups = await fetch("/api/rollups");
+        const dataRollups = resRollups.ok ? await resRollups.json() : null;
+        setRollups(dataRollups?.rollups ?? []);
+
+        // Fetch current logged-in user session
+        const resUser = await fetch("/api/auth/session");
+        if (resUser.ok) {
+          const dataUser = await resUser.json();
+          // safely set currentUser only if user exists
+          setCurrentUser(dataUser?.user ?? null);
+        } else {
+          // if session fetch fails set null
+          setCurrentUser(null);
+        }
+
+        // --- Uncomment below to bypass admin restrictions for testing ---
+        // setCurrentUser({ id: "demo", email: "demo@test.com", role: "ADMIN" });
+
       } catch (error) {
-        console.error("Error fetching rollups:", error);
+        console.error("Error fetching data:", error);
+        setCurrentUser(null); 
       } finally {
         setLoading(false);
       }
     }
-    fetchRollups();
+
+    fetchData();
   }, []);
 
   async function handleDelete(rollupId: string, userRole?: string) {
@@ -128,26 +154,6 @@ export default function ViewRollupsPage() {
                         Status: {deal.bitrixStatus}
                       </div>
                     )}
-                    {(deal.business_strategy || deal.growth_stage) && (
-                      <div className="text-sm text-muted-foreground">
-                        Strategy: {deal.business_strategy || "—"} | Growth: {deal.growth_stage || "—"}
-                      </div>
-                    )}
-                    {(deal.dealTeaser || deal.chunk_text) && (
-                      <div className="text-sm text-muted-foreground">
-                        {deal.dealTeaser || deal.chunk_text}
-                      </div>
-                    )}
-                    {(deal.firstName || deal.lastName || deal.email || deal.linkedinUrl || deal.workPhone) && (
-                      <div className="text-sm text-muted-foreground">
-                        Contact: {deal.firstName || ""} {deal.lastName || ""} | {deal.email || "—"} | {deal.linkedinUrl ? <a href={deal.linkedinUrl} className="text-blue-500 underline">LinkedIn</a> : "—"} | {deal.workPhone || "—"}
-                      </div>
-                    )}
-                    {deal.sourceWebsite && (
-                      <div className="text-sm text-muted-foreground">
-                        Source: <a href={deal.sourceWebsite} className="text-blue-500 underline">{deal.sourceWebsite}</a>
-                      </div>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -160,15 +166,19 @@ export default function ViewRollupsPage() {
 
             <Button
               size="sm"
-              variant="destructive"
-              onClick={() =>
-                handleDelete(
-                  rollup.id,
-                  rollup.users[0]?.role // demo; ideally use logged-in user's role
-                )
-              }
+              variant={currentUser?.role === "ADMIN" ? "destructive" : "secondary"} 
+              disabled={currentUser?.role !== "ADMIN"}
+              onClick={() => handleDelete(rollup.id, currentUser?.role)}
             >
-              Delete Rollup
+              {currentUser?.role === "ADMIN" ? "Delete Rollup" : "Only admins can delete"}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.location.href = `/rollup-details/${rollup.id}`}
+            >
+              View Details
             </Button>
           </div>
         ))}
