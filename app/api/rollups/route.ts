@@ -1,4 +1,3 @@
-// app/api/rollups/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
@@ -52,16 +51,16 @@ export async function POST(request: Request) {
 
 // GET all rollups in the database
 export async function GET() {
-   const userSession = await auth();
-   if (!userSession) {
-     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-   }
+  const userSession = await auth();
+  if (!userSession) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const rollups = await prisma.rollup.findMany({
       include: {
-        users: true,
-        deals: true, 
+        users: true, // include users who saved each rollup
+        deals: true, // include deals
       },
       orderBy: {
         createdAt: "desc",
