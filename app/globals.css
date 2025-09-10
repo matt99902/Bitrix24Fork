@@ -37,9 +37,9 @@
     --sidebar-accent-foreground: 0 0% 9.0196%;
     --sidebar-border: 0 0% 89.8039%;
     --sidebar-ring: 0 0% 63.1373%;
-    --font-sans: Geist Mono, monospace;
-    --font-serif: Geist Mono, monospace;
-    --font-mono: Geist Mono, monospace;
+    --font-sans: Poppins, sans-serif;
+    --font-serif: Poppins, sans-serif;
+    --font-mono: Poppins, sans-serif;
     --radius: 0rem;
     --shadow-2xs: 0px 1px 0px 0px hsl(0 0% 0% / 0);
     --shadow-xs: 0px 1px 0px 0px hsl(0 0% 0% / 0);
@@ -143,10 +143,6 @@
   .lead {
     @apply text-xl text-muted-foreground;
   }
-}
-
-* {
-  font-family: var(--font-lora);
 }
 
 .bg-gradient-radial-sunset {

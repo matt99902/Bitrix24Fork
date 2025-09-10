@@ -1,10 +1,13 @@
 "use server";
 
+import { auth } from "@/auth";
 import { openai, openaiClient } from "@/lib/ai/available-models";
 import prismaDB from "@/lib/prisma";
 import { splitContentIntoChunks } from "@/lib/utils";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
+import { headers } from "next/headers";
+import { rateLimit } from "@/lib/redis";
 
 /**
  * Evaluates a deal against a screener
@@ -13,6 +16,34 @@ import { z } from "zod";
  * @returns The evaluation result
  */
 export async function evaluateDeal(dealId: string, screenerId: string) {
+  const userSession = await auth();
+
+  if (!userSession) {
+    console.log("user session is not available");
+
+    return {
+      success: false,
+      error: "Unauthorized",
+    };
+  }
+
+  const ip =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
+  const { ok, remaining, reset } = await rateLimit(
+    `api:evaluate-deal:${ip}`,
+    10, // 10 requests per minute
+    60_000, // 1 minute
+  );
+
+  if (!ok) {
+    console.log("Rate limit excedded for evaluate deal");
+
+    return {
+      success: false,
+      message: "Too many requests",
+    };
+  }
+
   const fetchedDealInformation = await prismaDB.deal.findFirst({
     where: {
       id: dealId,

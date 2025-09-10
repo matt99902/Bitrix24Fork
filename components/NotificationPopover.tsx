@@ -24,6 +24,13 @@ type PendingDeal = {
   status: string;
 };
 
+type WebSocketMessage = {
+  type: string;
+  productId?: string;
+  status?: string;
+  userId?: string;
+};
+
 const NotificationPopover = ({ userId }: { userId: string }) => {
   const [open, setOpen] = useState(false);
   const [deals, setDeals] = useState<PendingDeal[]>([]);
@@ -31,25 +38,21 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
   const [isPending, startTransition] = useTransition();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryDelayRef = useRef(1000);
 
-  const fetchDeals = useCallback(
-    () =>
-      fetch("/api/deals/pending")
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data: PendingDeal[]) => {
-          console.log("📊 Fetched deals:", data);
-          setDeals(data);
-        })
-        .catch((error) => {
-          console.error("❌ Error fetching deals:", error);
-        }),
-    [],
-  );
+  const fetchDeals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/deals/pending");
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data: PendingDeal[] = await res.json();
+      console.log("📊 Fetched deals:", data);
+      setDeals(data);
+    } catch (error) {
+      console.error("❌ Error fetching deals:", error);
+    }
+  }, []);
 
   const fetchAndTransition = useCallback(() => {
     startTransition(() => {
@@ -58,7 +61,7 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
   }, [fetchDeals]);
 
   useEffect(() => {
-    if (open) fetchAndTransition();
+    fetchAndTransition();
   }, [open, fetchAndTransition]);
 
   const formatEbitda = (ebitda: number) => {
@@ -71,120 +74,65 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
   };
 
   const connectWebSocket = useCallback(() => {
-    // Get WebSocket URL from environment or use default
-    const wsUrl =
-      process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:8080";
+    const url = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:8080";
 
-    try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
+    const ws = new WebSocket(url);
+    wsRef.current = ws;
 
-      ws.onopen = () => {
-        console.log("✅ WebSocket connected");
-        setWsConnected(true);
-
-        // Clear any existing reconnect timeout
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = null;
-        }
-
-        // Register the user
-        ws.send(
-          JSON.stringify({
-            type: "register",
-            userId,
-          }),
-        );
-      };
-
-      ws.onmessage = (e) => {
-        console.log("📨 Received WebSocket message:", e.data);
-
-        try {
-          const msg = JSON.parse(e.data);
-
-          if (msg.type === "registered") {
-            console.log("✅ User registered with WebSocket server");
-          }
-
-          if (msg.type === "new_screen_call") {
-            console.log("🆕 New screen call received");
-            fetchAndTransition();
-          }
-
-          if (msg.type === "problem_done") {
-            console.log("✅ Problem done received:", msg);
-            setDeals((prev) => {
-              const updatedDeals = prev.filter((d) => d.id !== msg.productId);
-
-              if (prev.length !== updatedDeals.length) {
-                console.log(
-                  `Deal ${msg.productId} completed with status: ${msg.status}`,
-                );
-              }
-
-              return updatedDeals;
-            });
-          }
-        } catch (error) {
-          console.error("❌ Error parsing WebSocket message:", error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("❌ WebSocket error:", error);
-        setWsConnected(false);
-      };
-
-      ws.onclose = (event) => {
-        console.log(
-          "🔌 WebSocket connection closed:",
-          event.code,
-          event.reason,
-        );
-        setWsConnected(false);
-
-        // Attempt to reconnect after 3 seconds
-        if (event.code !== 1000) {
-          // Don't reconnect if it was a normal closure
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log("🔄 Attempting to reconnect WebSocket...");
-            connectWebSocket();
-          }, 3000);
-        }
-      };
-    } catch (error) {
-      console.error("❌ Failed to create WebSocket connection:", error);
-      setWsConnected(false);
-
-      // Attempt to reconnect after 5 seconds
-      reconnectTimeoutRef.current = setTimeout(() => {
-        console.log("🔄 Attempting to reconnect WebSocket...");
-        connectWebSocket();
-      }, 5000);
-    }
-  }, [userId, fetchAndTransition]);
-
-  useEffect(() => {
-    if (userId) {
-      connectWebSocket();
-    }
-
-    return () => {
-      // Cleanup WebSocket connection
-      if (wsRef.current) {
-        wsRef.current.close(1000, "Component unmounting");
-        wsRef.current = null;
-      }
-
-      // Clear reconnect timeout
+    ws.onopen = () => {
+      setWsConnected(true);
+      ws.send(JSON.stringify({ type: "register", userId }));
+      retryDelayRef.current = 1000;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
     };
+    ws.onmessage = (e) => {
+      try {
+        const msg: WebSocketMessage = JSON.parse(e.data);
+        if (msg.type === "new_screen_call") fetchAndTransition();
+        if (msg.type === "problem_done" && msg.productId) fetchAndTransition();
+      } catch {}
+    };
+    const scheduleReconnect = () => {
+      if (reconnectTimeoutRef.current) return;
+      const delay = Math.min(retryDelayRef.current, 10000);
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        connectWebSocket();
+      }, delay);
+      retryDelayRef.current = Math.min(delay * 2, 10000);
+    };
+    ws.onclose = () => {
+      setWsConnected(false);
+      scheduleReconnect();
+    };
+    ws.onerror = () => {
+      setWsConnected(false);
+      scheduleReconnect();
+    };
+  }, [userId, fetchAndTransition]);
+
+  useEffect(() => {
+    if (!userId) return;
+    connectWebSocket();
+    return () => {
+      wsRef.current?.close();
+      wsRef.current = null;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      retryDelayRef.current = 1000;
+    };
   }, [userId, connectWebSocket]);
+
+  useEffect(() => {
+    const onFocus = () => fetchAndTransition();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchAndTransition]);
 
   return (
     <div className="relative">
@@ -241,7 +189,21 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
               </div>
             )}
 
-            {deals.length === 0 && !isPending && (
+            {!wsConnected && !isPending && (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="mb-3 size-12 rounded-full bg-red-100 p-2 dark:bg-red-900/20">
+                  <div className="size-8 rounded-full bg-red-500"></div>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Connection lost
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Attempting to reconnect...
+                </p>
+              </div>
+            )}
+
+            {deals.length === 0 && !isPending && wsConnected && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Clock className="mb-3 size-12 text-muted-foreground/50" />
                 <p className="text-sm font-medium text-muted-foreground">

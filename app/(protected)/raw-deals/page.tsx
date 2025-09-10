@@ -24,6 +24,7 @@ import SearchPublishedDeals from "@/components/search-published-deals";
 import SearchStatusDeals from "@/components/search-status-deals";
 import SearchTagsDeals from "@/components/search-tags-deals";
 import DeleteFiltersButton from "@/components/Buttons/delete-filters-button";
+import SearchRecentDeals from "@/components/search-recent-deals";
 
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
   const ebitda = searchParams?.ebitda || "";
   const userId = searchParams?.userId || "";
   const showSeen = searchParams?.seen === "true" ? true : false;
+  const showRecent = searchParams?.recent === "true" ? true : false;
   const showReviewed = searchParams?.reviewed === "true" ? true : false;
   const showPublished = searchParams?.published === "true" ? true : false;
 
@@ -81,6 +83,7 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
     industry,
     ebitdaMargin,
     showSeen,
+    showRecent,
     showReviewed,
     showPublished,
     status: status as DealStatus,
@@ -149,6 +152,10 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchSeenDeals />
           </Suspense>
+          <Suspense fallback={<SearchDealsSkeleton />}>
+            <SearchRecentDeals />
+          </Suspense>
+
           <Suspense fallback={<SearchDealsSkeleton />}>
             <SearchReviewedDeals />
           </Suspense>
