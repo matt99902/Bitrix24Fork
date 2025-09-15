@@ -1,89 +1,56 @@
-// app/(protected)/rollup-details/[id]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
+import EditRollupDialog from "@/components/Dialogs/edit-rollup-dialog";
+import { Rollup as RollupType, Deal as DealType, User as UserType } from "@prisma/client";
+import { RollupUpdatePayload, DealUpdatePayload } from "@/components/Dialogs/edit-rollup-dialog";
 
-// --- Deal type with extra AI placeholders ---
-interface Deal {
-  id: string;
-  dealCaption: string;
-  brokerage: string;
-  revenue: number;
-  ebitda: number;
-  ebitdaMargin?: number;
-  industry: string;
+// Augmented Deal type including frontend-only AI fields
+export type DealWithAI = DealType & {
   score?: number;
+  grossRevenue?: number;
+  dealTeaser?: string;
   confidence_business_strategy?: number;
   confidence_growth_stage?: number;
-  grossRevenue?: number;
-  bitrixStatus?: string;
-  business_strategy?: string;
-  growth_stage?: string;
-  dealTeaser?: string;
-  chunk_text?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  linkedinUrl?: string;
-  workPhone?: string;
-  sourceWebsite?: string;
-  location?: string;
-  tags?: string;
-  description?: string;
-  title?: string;
-}
+};
 
-interface User {
-  id: string;
-  name?: string | null;
-  email: string;
-  role?: string;
-}
+// Rollup with relations + AI-enhanced deals
+export type RollupWithRelations = RollupType & {
+  deals: DealWithAI[];
+  users: UserType[];
+};
 
-interface Rollup {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-  deals: Deal[];
-  users: User[];
-  summary?: string; // AI summary placeholder
-}
+interface UserSession extends UserType {}
 
 interface RollupDetailsPageProps {
   params: { id: string } | Promise<{ id: string }>;
 }
 
 export default function RollupDetailsPage({ params }: RollupDetailsPageProps) {
-  const [rollup, setRollup] = useState<Rollup | null>(null);
+  const [rollup, setRollup] = useState<RollupWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [expandedDeals, setExpandedDeals] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   useEffect(() => {
     async function fetchRollup() {
-      try {
-        const resolvedParams = await Promise.resolve(params);
+      const resolvedParams = await Promise.resolve(params);
 
-        // --- fetch Prisma rollup data ---
+      try {
         const res = await fetch(`/api/rollups/${resolvedParams.id}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to fetch rollup");
 
-        if (!res.ok) {
-          toast.error(data.error || "Failed to fetch rollup details");
-          setRollup(null);
-          return;
-        }
-
-        // --- placeholder for AI data ---
-        const enrichedDeals = (data.rollup.deals || []).map((deal: Deal) => ({
+        // Cast deals to DealWithAI
+        const enrichedDeals: DealWithAI[] = (data.rollup.deals || []).map((deal: DealType) => ({
           ...deal,
-          score: Math.random(), // placeholder
-          grossRevenue: deal.revenue * 1.1, // placeholder
+          score: Math.random(),
+          grossRevenue: deal.revenue * 1.1,
           confidence_business_strategy: 0.8,
           confidence_growth_stage: 0.7,
           dealTeaser: deal.dealTeaser || "AI-generated teaser",
@@ -91,17 +58,69 @@ export default function RollupDetailsPage({ params }: RollupDetailsPageProps) {
           description: deal.description || "AI description placeholder",
         }));
 
-        setRollup({ ...data.rollup, deals: enrichedDeals, summary: "This is a placeholder for the AI-generated summary." });
-      } catch (error) {
-        console.error("Error fetching rollup details:", error);
+        setRollup({ ...data.rollup, deals: enrichedDeals });
+      } catch (err) {
+        console.error(err);
         toast.error("Error fetching rollup details");
+        setRollup(null);
       } finally {
         setLoading(false);
       }
+
+      // Fetch current user session
+      try {
+        const resUser = await fetch("/api/auth/session");
+        const dataUser = await resUser.json();
+        setCurrentUser(dataUser?.user ?? null);
+      } catch {}
     }
 
     fetchRollup();
   }, [params]);
+
+  const handleUpdateRollup = async (updated: RollupUpdatePayload) => {
+    if (!rollup) return;
+
+    try {
+      const res = await fetch(`/api/rollups/${rollup.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update rollup");
+
+      // Merge updated deals if returned
+      const updatedDeals: DealWithAI[] =
+        data.rollup.deals?.map((d: DealType) => ({
+          ...d,
+          score: Math.random(),
+          grossRevenue: d.revenue * 1.1,
+          confidence_business_strategy: 0.8,
+          confidence_growth_stage: 0.7,
+          dealTeaser: d.dealTeaser || "AI-generated teaser",
+          chunk_text: d.chunk_text || "AI-enriched chunk text",
+          description: d.description || "AI description placeholder",
+        })) || [];
+
+      setRollup({ ...data.rollup, deals: updatedDeals });
+      toast.success("Rollup updated!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update rollup");
+    }
+  };
+
+  const toggleDeal = (dealId: string) =>
+    setExpandedDeals((prev) => ({ ...prev, [dealId]: !prev[dealId] }));
+
+  const handleRemoveDeal = async (dealId: string) => {
+    if (currentUser?.role !== "ADMIN") {
+      toast.error("Only admins can remove deals.");
+      return;
+    }
+    toast.info(`Pretend removing deal ${dealId} (API not wired yet).`);
+  };
 
   if (loading) return <div className="p-6">Loading rollup details...</div>;
   if (!rollup) return <div className="p-6">Rollup not found.</div>;
@@ -117,12 +136,12 @@ export default function RollupDetailsPage({ params }: RollupDetailsPageProps) {
         <ChevronLeft className="h-4 w-4" /> Previous Page
       </Button>
 
-      <h1 className="text-2xl font-bold">{rollup.name}</h1>
-      {rollup.description && <p className="text-muted-foreground">{rollup.description}</p>}
-      <p className="text-sm text-muted-foreground">
-        Created: {new Date(rollup.createdAt).toLocaleString()} | Updated: {new Date(rollup.updatedAt).toLocaleString()}
-      </p>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">{rollup.name}</h1>
+        <EditRollupDialog rollup={rollup} onSave={handleUpdateRollup} />
+      </div>
 
+      {rollup.description && <p className="text-muted-foreground">{rollup.description}</p>}
       {rollup.summary && (
         <div className="p-3 bg-gray-50 rounded-md">
           <h2 className="font-semibold">AI Summary</h2>
@@ -130,53 +149,63 @@ export default function RollupDetailsPage({ params }: RollupDetailsPageProps) {
         </div>
       )}
 
+      <p className="text-sm text-muted-foreground">
+        Created: {new Date(rollup.createdAt).toLocaleString()} | Updated:{" "}
+        {new Date(rollup.updatedAt).toLocaleString()}
+      </p>
+
+      {/* Deals Section */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Deals</h2>
         <ul className="space-y-2">
-          {rollup.deals.map((deal) => (
-            <li key={deal.id} className="border rounded-md p-3 shadow-sm bg-background">
-              <div className="font-semibold">{deal.title || deal.dealCaption}</div>
-              <div className="text-sm text-muted-foreground">
-                Brokerage: {deal.brokerage} | Revenue: ${deal.revenue.toLocaleString()} | Gross Revenue: ${deal.grossRevenue?.toLocaleString()} | EBITDA: ${deal.ebitda.toLocaleString()} | EBITDA Margin: {deal.ebitdaMargin ?? "—"}% | Industry: {deal.industry}
-              </div>
-              {deal.score !== undefined && <div className="text-sm text-muted-foreground">Score: {(deal.score * 100).toFixed(0)}%</div>}
-              {deal.confidence_business_strategy !== undefined && (
-                <div className="text-sm text-muted-foreground">
-                  Confidence (Business Strategy): {(deal.confidence_business_strategy * 100).toFixed(0)}%
+          {rollup.deals.map((deal) => {
+            const expanded = expandedDeals[deal.id];
+            return (
+              <li key={deal.id} className="border rounded-md p-3 shadow-sm bg-background">
+                <div
+                  className="flex justify-between items-center cursor-pointer"
+                  onClick={() => toggleDeal(deal.id)}
+                >
+                  <span className="font-semibold">{deal.title || deal.dealCaption}</span>
+                  {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </div>
-              )}
-              {deal.confidence_growth_stage !== undefined && (
-                <div className="text-sm text-muted-foreground">
-                  Confidence (Growth Stage): {(deal.confidence_growth_stage * 100).toFixed(0)}%
-                </div>
-              )}
-              {deal.bitrixStatus && <div className="text-sm text-muted-foreground">Status: {deal.bitrixStatus}</div>}
-              {deal.business_strategy || deal.growth_stage ? (
-                <div className="text-sm text-muted-foreground">
-                  Strategy: {deal.business_strategy || "—"} | Growth: {deal.growth_stage || "—"}
-                </div>
-              ) : null}
-              {deal.dealTeaser && <div className="text-sm text-muted-foreground">{deal.dealTeaser}</div>}
-              {deal.chunk_text && <div className="text-sm text-muted-foreground">{deal.chunk_text}</div>}
-              {deal.description && <div className="text-sm text-muted-foreground">{deal.description}</div>}
-              {(deal.firstName || deal.lastName || deal.email || deal.linkedinUrl || deal.workPhone) && (
-                <div className="text-sm text-muted-foreground">
-                  Contact: {deal.firstName || ""} {deal.lastName || ""} | {deal.email || "—"} |{" "}
-                  {deal.linkedinUrl ? <a href={deal.linkedinUrl} className="text-blue-500 underline">LinkedIn</a> : "—"} | {deal.workPhone || "—"}
-                </div>
-              )}
-              {deal.sourceWebsite && (
-                <div className="text-sm text-muted-foreground">
-                  Source: <a href={deal.sourceWebsite} className="text-blue-500 underline">{deal.sourceWebsite}</a>
-                </div>
-              )}
-              {deal.location && <div className="text-sm text-muted-foreground">Location: {deal.location}</div>}
-              {deal.tags && <div className="text-sm text-muted-foreground">Tags: {deal.tags}</div>}
-            </li>
-          ))}
+
+                {expanded && (
+                  <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                    <div>
+                      Brokerage: {deal.brokerage} | Revenue: ${deal.revenue.toLocaleString()} | Gross Revenue: $
+                      {deal.grossRevenue?.toLocaleString()} | EBITDA: ${deal.ebitda.toLocaleString()} | EBITDA Margin:{" "}
+                      {deal.ebitdaMargin ?? "—"}% | Industry: {deal.industry}
+                    </div>
+                    {deal.score !== undefined && <div>Score: {(deal.score * 100).toFixed(0)}%</div>}
+                    {deal.confidence_business_strategy !== undefined && (
+                      <div>Confidence (Business Strategy): {(deal.confidence_business_strategy * 100).toFixed(0)}%</div>
+                    )}
+                    {deal.confidence_growth_stage !== undefined && (
+                      <div>Confidence (Growth Stage): {(deal.confidence_growth_stage * 100).toFixed(0)}%</div>
+                    )}
+                    {deal.dealTeaser && <div>{deal.dealTeaser}</div>}
+                    {deal.chunk_text && <div>{deal.chunk_text}</div>}
+                    {deal.description && <div>{deal.description}</div>}
+
+                    <Button
+                      size="sm"
+                      variant={currentUser?.role === "ADMIN" ? "destructive" : "secondary"}
+                      disabled={currentUser?.role !== "ADMIN"}
+                      onClick={() => handleRemoveDeal(deal.id)}
+                      className="mt-2"
+                    >
+                      {currentUser?.role === "ADMIN" ? "Remove Deal" : "Only admins can remove deals"}
+                    </Button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
+      {/* Users Section */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Saved by Users</h2>
         <ul className="text-sm text-muted-foreground space-y-1">
