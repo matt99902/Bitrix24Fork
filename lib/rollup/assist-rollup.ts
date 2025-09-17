@@ -44,6 +44,10 @@ export async function searchRollupCandidates(criteria: RollupCriteria) {
   return response.result.hits.map((hit: any) => ({
     id: hit._id,
     score: hit._score,
-    ...hit.fields,
+    title: hit.fields.title,
+    ebitda: hit.fields.ebitda,
+    revenue: hit.fields.revenue,
+    companyLocation: hit.fields.companyLocation,
+    ebitdaMargin: hit.fields.ebitdaMargin,
   }));
 }
