@@ -76,10 +76,13 @@ export async function POST(request: Request) {
     console.log("before promise.all");
     // await Promise.all(publishPromises);
 
-    fetch(`${WORKER_URL}/process-queue`, { method: "POST" }).catch((err) => {
-      console.error("Failed to trigger worker:", err.message);
-      // You might want to add more robust error handling/logging here
-    });
+    await fetch(`${WORKER_URL}/process-queue`, { method: "POST" })
+      .then((e) => {
+        console.log("worker triggered successfully", e);
+      })
+      .catch((err) => {
+        console.error("Failed to trigger worker:", err.message);
+      });
 
     console.log("all promises ran successfully");
 

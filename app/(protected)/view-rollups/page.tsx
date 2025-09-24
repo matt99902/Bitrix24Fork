@@ -83,7 +83,7 @@ export default function ViewRollupsPage() {
   }, []);
 
   async function handleDelete(rollupId: string, userRole?: string) {
-    if (userRole !== "ADMIN") {
+  if (userRole !== "ADMIN") {
       toast.error("Only admins can delete rollups.");
       return;
     }
