@@ -1,14 +1,14 @@
-"use client";
+import { Metadata } from "next";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import SaveRollupClient from "@/components/SaveRollupClient";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
-import { toast } from "sonner";
-import SaveRollupDialog from "@/components/Dialogs/save-rollup-dialog";
+export const metadata: Metadata = {
+  title: "Save Rollup",
+  description: "Save selected deals as a rollup",
+};
 
-// Simplified placeholder type
+// Simplified placeholder type, need to fetch these from source
 interface PlaceholderDeal {
   id: string;
   brokerage: string;
@@ -24,13 +24,13 @@ interface PlaceholderDeal {
   title?: string | null;
 }
 
-export default function RollupPage() {
-  const router = useRouter();
-  const { data: session } = useSession();
-  const userRole = session?.user?.role;
+// Server-side function to get deals (placeholder implementation)
+async function getDealsForRollup(): Promise<PlaceholderDeal[]> {
+  // 1. Get deals from URL params/search params
+  // 2. Fetch from database based on selection criteria
+  // 3. Get from session storage or other state management
 
-  // Placeholder deals
-  const [deals, setDeals] = useState<PlaceholderDeal[]>([
+  return [
     {
       id: "1",
       brokerage: "Example Brokerage",
@@ -73,103 +73,28 @@ export default function RollupPage() {
       dealCaption: "Healthcare Expansion",
       title: "Healthcare Expansion",
     },
+  ];
+}
+
+async function getCurrentUserSession() {
+  return await auth();
+}
+
+export default async function SaveRollupPage() {
+  const [deals, session] = await Promise.all([
+    getDealsForRollup(),
+    getCurrentUserSession(),
   ]);
 
-  // Track selected deals
-  const [selectedDeals, setSelectedDeals] = useState<Set<string>>(new Set());
-
-  const toggleSelect = (id: string) => {
-    setSelectedDeals((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet;
-    });
-  };
-
-  const deleteSelected = () => {
-    if (userRole !== "ADMIN") {
-      toast.error("Only admins can delete deals from a rollup.");
-      return;
-    }
-
-    setDeals((prev) => prev.filter((deal) => !selectedDeals.has(deal.id)));
-    setSelectedDeals(new Set());
-    toast.success("Selected deals deleted.");
-  };
-
-  const handleSaveRollup = (name: string, description: string) => {
-    if (userRole !== "ADMIN") {
-      toast.error("Only admins can save a rollup.");
-      return;
-    }
-
-    if (selectedDeals.size === 0) {
-      toast.error("Please select at least one deal to save a rollup.");
-      return;
-    }
-
-    const selected = deals.filter((d) => selectedDeals.has(d.id));
-    // TODO: send to API instead of console
-    console.log("Saving Rollup:", { name, description, deals: selected });
-    toast.success(`Rollup "${name}" saved with ${selected.length} deals!`);
-  };
+  // Optionally protect the route
+  if (!session) {
+    redirect("/auth/login");
+  }
 
   return (
-    <div className="p-6">
-      {/* Previous Page Button */}
-      <Button
-        variant="outline"
-        className="mb-4 flex items-center gap-2"
-        onClick={() => router.back()}
-      >
-        <ChevronLeft className="h-4 w-4" />
-        Previous Page
-      </Button>
-
-      <h1 className="text-2xl font-bold mb-4">Deals Found</h1>
-
-      {/* Deal List */}
-      <div className="flex flex-col gap-4 mb-4 border p-4 rounded-md">
-        {deals.map((deal) => (
-          <div
-            key={deal.id}
-            className="flex items-start gap-3 border-b last:border-b-0 pb-3"
-          >
-            <input
-              type="checkbox"
-              checked={selectedDeals.has(deal.id)}
-              onChange={() => toggleSelect(deal.id)}
-              className="mt-1 h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-            <div className="flex-1 space-y-1">
-              <div className="font-semibold">{deal.title}</div>
-              <div className="text-sm text-muted-foreground">
-                <p>Brokerage: {deal.brokerage}</p>
-                <p>
-                  Name: {deal.firstName} {deal.lastName}
-                </p>
-                <p>Email: {deal.email || "—"}</p>
-                <p>LinkedIn: {deal.linkedinUrl || "—"}</p>
-                <p>Phone: {deal.workPhone || "—"}</p>
-                <p>Revenue: ${deal.revenue.toLocaleString()}</p>
-                <p>EBITDA: ${deal.ebitda.toLocaleString()}</p>
-                <p>Industry: {deal.industry}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-4">
-        <Button variant="destructive" onClick={deleteSelected}>
-          Delete Selected
-        </Button>
-
-        {}
-        <SaveRollupDialog onSave={handleSaveRollup} />
-      </div>
-    </div>
+    <SaveRollupClient 
+      initialDeals={deals} 
+      userRole={session.user?.role || null} 
+    />
   );
 }

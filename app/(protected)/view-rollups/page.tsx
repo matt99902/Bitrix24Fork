@@ -1,9 +1,15 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
-import { toast } from "sonner";
+import prisma from "@/lib/prisma";
+import { auth } from "@/auth";
+import DeleteRollupButton from "@/components/buttons/delete-rollup-button";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "View Rollups",
+  description: "View and manage all rollups",
+};
 
 interface Deal {
   id: string;
@@ -31,81 +37,53 @@ interface Rollup {
   id: string;
   name: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   deals: Deal[];
   users: { id: string; name?: string | null; email: string; role?: string }[];
 }
 
-interface UserSession {
-  id: string;
-  name?: string | null;
-  email: string;
-  role?: string;
+// Server-side data fetching function
+async function getRollups(): Promise<Rollup[]> {
+  try {
+    const rollups = await prisma.rollup.findMany({
+      include: { users: true, deals: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return rollups.map((rollup) => ({
+      ...rollup,
+      description: rollup.description === null ? undefined : rollup.description,
+    }));
+  } catch (error) {
+    console.error("Error fetching rollups:", error);
+    return [];
+  }
 }
 
-export default function ViewRollupsPage() {
-  const [rollups, setRollups] = useState<Rollup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+async function getCurrentUserRole() {
+  const session = await auth();
+  return session?.user?.role || null;
+}
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch all rollups
-        const resRollups = await fetch("/api/rollups");
-        const dataRollups = resRollups.ok ? await resRollups.json() : null;
-        setRollups(dataRollups?.rollups ?? []);
+export default async function ViewRollupsPage() {
+  const [rollups, currentUserRole] = await Promise.all([
+    getRollups(),
+    getCurrentUserRole(),
+  ]);
 
-        // Fetch current logged-in user session
-        const resUser = await fetch("/api/auth/session");
-        if (resUser.ok) {
-          const dataUser = await resUser.json();
-          // safely set currentUser only if user exists
-          setCurrentUser(dataUser?.user ?? null);
-        } else {
-          // if session fetch fails set null
-          setCurrentUser(null);
-        }
-
-        // --- Uncomment below to bypass admin restrictions for testing ---
-        // setCurrentUser({ id: "demo", email: "demo@test.com", role: "ADMIN" });
-
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setCurrentUser(null); 
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, []);
-
-  async function handleDelete(rollupId: string, userRole?: string) {
-    if (userRole !== "ADMIN") {
-      toast.error("Only admins can delete rollups.");
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/rollups/${rollupId}`, { method: "DELETE" });
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success("Rollup deleted successfully!");
-        setRollups((prev) => prev.filter((r) => r.id !== rollupId));
-      } else {
-        toast.error(data.error || "Failed to delete rollup.");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete rollup.");
-    }
+  if (rollups.length === 0) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <ChevronUp className="h-5 w-5" />
+          All Rollups
+        </h1>
+        <div className="text-center mt-12">
+          <p className="text-xl text-muted-foreground">No rollups found.</p>
+        </div>
+      </div>
+    );
   }
-
-  if (loading) return <div className="p-6">Loading rollups...</div>;
-  if (!rollups.length) return <div className="p-6">No rollups found.</div>;
 
   return (
     <div className="p-6">
@@ -142,7 +120,8 @@ export default function ViewRollupsPage() {
                       {deal.title || deal.dealCaption}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Brokerage: {deal.brokerage} | Revenue: ${deal.revenue.toLocaleString()} | EBITDA: ${deal.ebitda.toLocaleString()} | Industry: {deal.industry}
+                      Brokerage: {deal.brokerage} | Revenue: ${deal.revenue.toLocaleString()} | 
+                      EBITDA: ${deal.ebitda.toLocaleString()} | Industry: {deal.industry}
                     </div>
                     {deal.score !== undefined && (
                       <div className="text-sm text-muted-foreground">
@@ -164,22 +143,18 @@ export default function ViewRollupsPage() {
               {rollup.users.map((user) => user.name || user.email).join(", ")}
             </div>
 
-            <Button
-              size="sm"
-              variant={currentUser?.role === "ADMIN" ? "destructive" : "secondary"} 
-              disabled={currentUser?.role !== "ADMIN"}
-              onClick={() => handleDelete(rollup.id, currentUser?.role)}
-            >
-              {currentUser?.role === "ADMIN" ? "Delete Rollup" : "Only admins can delete"}
-            </Button>
+            <div className="flex gap-2">
+              <DeleteRollupButton
+                rollupId={rollup.id}
+                userRole={currentUserRole}
+              />
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => window.location.href = `/rollup-details/${rollup.id}`}
-            >
-              View Details
-            </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/rollup-details/${rollup.id}`}>
+                  View Details
+                </Link>
+              </Button>
+            </div>
           </div>
         ))}
       </div>
