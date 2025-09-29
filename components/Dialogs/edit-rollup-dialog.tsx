@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,16 +25,16 @@ export type RollupUpdatePayload = {
 
 interface EditRollupDialogProps {
   rollup: RollupType & { deals?: DealType[] };
-  onSave: (updated: RollupUpdatePayload) => void;
 }
 
-export default function EditRollupDialog({ rollup, onSave }: EditRollupDialogProps) {
+export default function EditRollupDialog({ rollup }: EditRollupDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(rollup.name);
   const [description, setDescription] = useState(rollup.description ?? "");
   const [summary, setSummary] = useState(rollup.summary ?? "");
   const [deals, setDeals] = useState<DealType[]>(rollup.deals ?? []);
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
 
   const handleDealChange = (
     id: string,
@@ -55,15 +56,30 @@ export default function EditRollupDialog({ rollup, onSave }: EditRollupDialogPro
         description: d.description ?? null,
       }));
 
-      await onSave({
+      const payload: RollupUpdatePayload = {
         name,
         description,
         summary,
         deals: updatedDeals.length ? updatedDeals : undefined,
+      };
+
+      const res = await fetch(`/api/rollups/${rollup.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update rollup");
+      }
 
       toast.success("Rollup updated!");
       setOpen(false);
+      
+      // Refresh the page to show updated data
+      router.refresh();
     } catch (err) {
       console.error(err);
       toast.error("Failed to save rollup");
