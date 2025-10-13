@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useTransition } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Rollup as RollupType, Deal as DealType } from "@prisma/client";
 import { toast } from "sonner";
+import { updateRollup, updateDealInRollup } from "@/app/actions/rollup-actions";
 
 // --- Custom types ---
 export type DealUpdatePayload = {
@@ -24,52 +31,78 @@ export type RollupUpdatePayload = {
 
 interface EditRollupDialogProps {
   rollup: RollupType & { deals?: DealType[] };
-  onSave: (updated: RollupUpdatePayload) => void;
+  onSave?: (updated: RollupUpdatePayload) => void; // kept for backward compatibility
 }
 
-export default function EditRollupDialog({ rollup, onSave }: EditRollupDialogProps) {
+export default function EditRollupDialog({
+  rollup,
+  onSave,
+}: EditRollupDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(rollup.name);
   const [description, setDescription] = useState(rollup.description ?? "");
   const [summary, setSummary] = useState(rollup.summary ?? "");
   const [deals, setDeals] = useState<DealType[]>(rollup.deals ?? []);
-  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleDealChange = (
     id: string,
     field: keyof Pick<DealType, "chunk_text" | "description">,
-    value: string
+    value: string,
   ) => {
     setDeals((prev) =>
-      prev.map((deal) => (deal.id === id ? { ...deal, [field]: value } : deal))
+      prev.map((deal) => (deal.id === id ? { ...deal, [field]: value } : deal)),
     );
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      // Build partial deal updates
-      const updatedDeals: DealUpdatePayload[] = deals.map((d) => ({
-        id: d.id,
-        chunk_text: d.chunk_text ?? null,
-        description: d.description ?? null,
-      }));
+    startTransition(async () => {
+      try {
+        // Update rollup
+        const rollupResult = await updateRollup(rollup.id, {
+          name,
+          description,
+          summary,
+        });
 
-      await onSave({
-        name,
-        description,
-        summary,
-        deals: updatedDeals.length ? updatedDeals : undefined,
-      });
+        if (!rollupResult.success) {
+          toast.error(rollupResult.error || "Failed to update rollup");
+          return;
+        }
 
-      toast.success("Rollup updated!");
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save rollup");
-    } finally {
-      setSaving(false);
-    }
+        // Update deals if provided
+        if (deals.length > 0) {
+          for (const deal of deals) {
+            await updateDealInRollup(deal.id, {
+              chunk_text: deal.chunk_text ?? undefined,
+              description: deal.description ?? undefined,
+            });
+          }
+        }
+
+        // Call onSave callback if provided (for backward compatibility)
+        if (onSave) {
+          const updatedDeals: DealUpdatePayload[] = deals.map((d) => ({
+            id: d.id,
+            chunk_text: d.chunk_text ?? null,
+            description: d.description ?? null,
+          }));
+
+          onSave({
+            name,
+            description,
+            summary,
+            deals: updatedDeals.length ? updatedDeals : undefined,
+          });
+        }
+
+        toast.success("Rollup updated!");
+        setOpen(false);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to save rollup");
+      }
+    });
   };
 
   return (
@@ -82,19 +115,24 @@ export default function EditRollupDialog({ rollup, onSave }: EditRollupDialogPro
           <DialogTitle>Edit Rollup</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="mb-1 block text-sm font-medium">Name</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="mb-1 block text-sm font-medium">
+              Description
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Summary</label>
+            <label className="mb-1 block text-sm font-medium">Summary</label>
             <Textarea
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
@@ -106,16 +144,25 @@ export default function EditRollupDialog({ rollup, onSave }: EditRollupDialogPro
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Deals</h2>
               {deals.map((deal) => (
-                <div key={deal.id} className="border rounded-md p-3 bg-gray-50 space-y-2">
-                  <p className="font-medium">{deal.title || deal.dealCaption}</p>
+                <div
+                  key={deal.id}
+                  className="space-y-2 rounded-md border bg-gray-50 p-3"
+                >
+                  <p className="font-medium">
+                    {deal.title || deal.dealCaption}
+                  </p>
                   <Textarea
                     value={deal.chunk_text ?? ""}
-                    onChange={(e) => handleDealChange(deal.id, "chunk_text", e.target.value)}
+                    onChange={(e) =>
+                      handleDealChange(deal.id, "chunk_text", e.target.value)
+                    }
                     placeholder="Chunk text"
                   />
                   <Textarea
                     value={deal.description ?? ""}
-                    onChange={(e) => handleDealChange(deal.id, "description", e.target.value)}
+                    onChange={(e) =>
+                      handleDealChange(deal.id, "description", e.target.value)
+                    }
                     placeholder="Description"
                   />
                 </div>
@@ -123,12 +170,16 @@ export default function EditRollupDialog({ rollup, onSave }: EditRollupDialogPro
             </div>
           )}
 
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="secondary" onClick={() => setOpen(false)} disabled={saving}>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending ? "Saving..." : "Save"}
             </Button>
           </div>
         </div>

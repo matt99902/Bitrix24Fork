@@ -48,7 +48,7 @@ export const NavLinks: NavLinkType = [
   { navlink: "/raw-deals", navlabel: "Raw", icon: FiList },
   { navlink: "/published-deals", navlabel: "Published", icon: FiCheckSquare },
   { navlink: "/screeners", navlabel: "Screener", icon: FaScrewdriver },
-  { navlink: "/view-rollups", navlabel: "Rollups", icon: HiChevronUp },
+  { navlink: "/rollups", navlabel: "Rollups", icon: HiChevronUp },
 ];
 
 const Header = ({ className, session }: HeaderProps) => {
