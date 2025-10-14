@@ -238,3 +238,60 @@ export async function getCompleteAiReasoningById(reasoningId: string) {
     return null;
   }
 }
+
+/**
+ * Get all rollups with their deals and users
+ * @returns all rollups with relations
+ */
+export async function getAllRollups() {
+  try {
+    return await prismaDB.rollup.findMany({
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        deals: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching all rollups", error);
+    return null;
+  }
+}
+
+/**
+ * Get a rollup by id with its deals and users
+ * @param rollupId - the id of the rollup
+ * @returns the rollup with relations
+ */
+export async function getRollupById(rollupId: string) {
+  try {
+    return await prismaDB.rollup.findUnique({
+      where: {
+        id: rollupId,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        deals: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching rollup by id", error);
+    return null;
+  }
+}
