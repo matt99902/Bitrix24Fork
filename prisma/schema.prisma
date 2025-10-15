@@ -25,7 +25,7 @@ model User {
   isBlocked     Boolean         @default(false)
   UserActionLog UserActionLog[]
   Deal          Deal[]
-  Rollups       Rollup[]        @relation("UserRollups")
+  Notification  Notification[]
 }
 
 model Account {
@@ -238,4 +238,17 @@ model Rollup {
 
   deals Deal[] @relation("RollupDeals")
   users User[] @relation("UserRollups")
+  
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  status    String // e.g. "processing", "completed", "failed"
+  dealId    String? // optional, for linking a specific deal
+  dealName  String? // store title or caption for quick reference
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
 }
