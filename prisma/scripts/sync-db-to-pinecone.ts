@@ -109,12 +109,12 @@ async function main() {
     if (userId) record.userId = userId;
     if (tags) record.tags = tags;
 
-    const inferred = await inferAttributes(deal);
-    record.business_strategy = inferred.business_strategy;
-    record.growth_stage = inferred.growth_stage;
-    record.confidence_business_strategy =
-      inferred.confidence_scores.business_strategy;
-    record.confidence_growth_stage = inferred.confidence_scores.growth_stage;
+    // const inferred = await inferAttributes(deal);
+    // record.business_strategy = inferred.business_strategy;
+    // record.growth_stage = inferred.growth_stage;
+    // record.confidence_business_strategy =
+    //   inferred.confidence_scores.business_strategy;
+    // record.confidence_growth_stage = inferred.confidence_scores.growth_stage;
 
     records.push(record);
   }

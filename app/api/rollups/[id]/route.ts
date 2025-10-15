@@ -1,9 +1,7 @@
-// app/api/rollups/[id]/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 
-// --- Types for updating deals/rollups ---
 interface UpdateDealPayload {
   id: string;
   chunk_text?: string;
