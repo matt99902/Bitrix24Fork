@@ -20,7 +20,7 @@ export function useJobWebSocket(userId: string) {
   useEffect(() => {
     const connect = () => {
       console.log("🔌 Connecting to WebSocket...");
-      const ws = new WebSocket("ws://localhost:8081");
+      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_URL!);
       wsRef.current = ws;
 
       ws.onopen = () => {
