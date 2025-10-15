@@ -155,9 +155,6 @@ export async function getAllScreenersWithContent() {
       select: {
         id: true,
         name: true,
-        content: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
   } catch (error) {

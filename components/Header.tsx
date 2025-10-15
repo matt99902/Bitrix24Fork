@@ -13,6 +13,7 @@ import {
   FiEdit,
   FiTrendingUp,
   FiSearch,
+  FiClock,
 } from "react-icons/fi";
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ export const NavLinks: NavLinkType = [
   { navlink: "/raw-deals", navlabel: "Raw", icon: FiList },
   { navlink: "/published-deals", navlabel: "Published", icon: FiCheckSquare },
   { navlink: "/screeners", navlabel: "Screener", icon: FaScrewdriver },
+  { navlink: "/job-history", navlabel: "History", icon: FiClock },
   { navlink: "/rollups", navlabel: "Rollups", icon: HiChevronUp },
 ];
 

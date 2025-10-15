@@ -136,10 +136,7 @@ export default function DealContainer({ data, userRole }: DealContainerProps) {
               </AlertDialogContent>
             </AlertDialog>
 
-            <BulkScreenDialog
-              deals={data}
-              selectedIds={Array.from(selectedIds)}
-            />
+            <BulkScreenDialog selectedIds={Array.from(selectedIds)} />
           </div>
         )}
       </div>

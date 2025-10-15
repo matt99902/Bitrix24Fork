@@ -1,97 +1,76 @@
-import { auth } from "@/auth";
 import { pubSubClient } from "@/lib/pubsub-client";
-import { redisClient } from "@/lib/redis";
+import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-
-// const topicName = process.env.PUBSUB_TOPIC_NAME;
-
-const WORKER_URL = process.env.WORKER_URL;
+import { redisClient } from "@/lib/redis";
+import crypto from "crypto";
 
 export async function POST(request: Request) {
   const userSession = await auth();
 
   if (!userSession) {
-    return NextResponse.json(
-      {
-        message: "Unauthorized",
-      },
-      {
-        status: 401,
-      },
-    );
-  }
-
-  const { dealListings, screenerId, screenerContent, screenerName } =
-    await request.json();
-
-  if (
-    !dealListings ||
-    !Array.isArray(dealListings) ||
-    dealListings.length === 0
-  ) {
-    return NextResponse.json(
-      { message: "Invalid deal listings" },
-      { status: 400 },
-    );
-  }
-
-  if (!screenerId || !screenerContent || !screenerName) {
-    console.log(
-      "screener information is not present inside screen all function",
-    );
-
-    return NextResponse.json({ message: "Invalid screener" }, { status: 400 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // We'll collect all the publish promises to run them in parallel
-    // const publishPromises: Promise<string>[] = [];
+    const { payload } = await request.json();
+    console.log("payload", payload);
 
-    // Enqueue each deal (await to ensure completion before publish)
-    for (const dealListing of dealListings) {
-      const payload = {
-        ...dealListing,
-        userId: userSession.user.id,
-        screenerId,
-        screenerContent,
-        screenerName,
-      };
-      await redisClient.rpush("dealListings", JSON.stringify(payload));
+    const topicName = `projects/${process.env.GCLOUD_PROJECT_ID}/topics/screen-deal`;
 
-      // const dataBuffer = Buffer.from(JSON.stringify(payload));
-      // const publishPromise = pubSubClient
-      //   .topic(topicName!)
-      //   .publishMessage({ data: dataBuffer });
+    // Create individual jobs for each deal ID
+    const publishPromises = payload.dealIds.map(async (dealId: string) => {
+      const jobId = crypto.randomUUID();
 
-      // publishPromises.push(publishPromise);
-    }
+      // Store individual job in Redis with error handling
+      try {
+        await redisClient.hset(`job:${jobId}`, {
+          status: "queued",
+          userId: userSession.user.id,
+          dealId: dealId,
+          screenerId: payload.screenerId,
+          createdAt: Date.now().toString(),
+        });
+        await redisClient.expire(`job:${jobId}`, 3600 * 24);
+      } catch (redisError) {
+        console.error(`Redis operation failed for job ${jobId}:`, redisError);
+        throw new Error(`Failed to store job information for deal ${dealId}`);
+      }
 
-    // Notify via pub/sub that new items are available for this user
-    await redisClient.publish(
-      "new_screen_call",
-      JSON.stringify({ userId: userSession.user.id }),
+      const dataBuffer = Buffer.from(
+        JSON.stringify({
+          jobId: jobId,
+          userId: userSession.user.id,
+          dealId: dealId,
+          screenerId: payload.screenerId,
+          jobType: "screen-deal",
+        }),
+      );
+
+      const messageId = await pubSubClient
+        .topic(topicName)
+        .publishMessage({ data: dataBuffer });
+
+      console.log(
+        `Published message for deal ${dealId} with job ${jobId}:`,
+        messageId,
+      );
+      return { jobId, dealId, messageId };
+    });
+
+    // Wait for all messages to be published
+    const results = await Promise.all(publishPromises);
+    console.log(`Successfully published ${results.length} messages to pubsub`);
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        jobs: results.map((r) => ({ jobId: r.jobId, dealId: r.dealId })),
+      }),
     );
-
-    // Await all messages to be published
-    console.log("before promise.all");
-    // await Promise.all(publishPromises);
-
-    await fetch(`${WORKER_URL}/process-queue`, { method: "POST" })
-      .then((e) => {
-        console.log("worker triggered successfully", e);
-      })
-      .catch((err) => {
-        console.error("Failed to trigger worker:", err.message);
-      });
-
-    console.log("all promises ran successfully");
-
-    return NextResponse.json({ message: "Jobs Published Successfully" });
-  } catch (error) {
-    console.error("Error enqueuing deals:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error" },
-      { status: 500 },
-    );
+  } catch (err: any) {
+    console.error(err);
+    return new Response(JSON.stringify({ ok: false, error: err.message }), {
+      status: 500,
+    });
   }
 }

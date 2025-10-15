@@ -23,19 +23,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import type { Deal } from "@prisma/client";
 import { toast } from "sonner";
 import axios from "axios";
 import { fetcher } from "@/lib/utils";
 import { DealScreenersGET } from "@/app/types";
+import useCurrentUser from "@/hooks/use-current-user";
 
-export function BulkScreenDialog({
-  deals,
-  selectedIds,
-}: {
-  deals: Deal[];
-  selectedIds: string[];
-}) {
+export function BulkScreenDialog({ selectedIds }: { selectedIds: string[] }) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -54,7 +48,7 @@ export function BulkScreenDialog({
               Screen deals to find the best deals.
             </DialogDescription>
           </DialogHeader>
-          <BulkScreenComponent deals={deals} selectedIds={selectedIds} />
+          <BulkScreenComponent selectedIds={selectedIds} />
         </DialogContent>
       </Dialog>
     );
@@ -78,24 +72,19 @@ export function BulkScreenDialog({
           <DrawerClose asChild>
             <Button variant="outline">Cancel</Button>
           </DrawerClose>
-          <BulkScreenComponent deals={deals} selectedIds={selectedIds} />
+          <BulkScreenComponent selectedIds={selectedIds} />
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
 }
 
-function BulkScreenComponent({
-  deals,
-  selectedIds,
-}: {
-  deals: Deal[];
-  selectedIds: string[];
-}) {
+function BulkScreenComponent({ selectedIds }: { selectedIds: string[] }) {
   const [isPending, startScreenTransition] = React.useTransition();
   const [selectedScreenerId, setSelectedScreenerId] = React.useState<
     string | null
   >(null);
+  const user = useCurrentUser();
   const { data, error, isLoading } = useSWR<DealScreenersGET>(
     `/api/deal-screeners`,
     fetcher,
@@ -125,22 +114,34 @@ function BulkScreenComponent({
         return;
       }
 
-      const filteredData = deals.filter((d) => selectedIds.includes(d.id));
-
       try {
         const response = await axios.post(`/api/screen-all`, {
-          dealListings: filteredData,
-          screenerId: selectedScreenerId,
-          screenerContent: data?.find(
-            (screener) => screener.id === selectedScreenerId,
-          )?.content,
-          screenerName: data?.find(
-            (screener) => screener.id === selectedScreenerId,
-          )?.name,
+          payload: {
+            dealIds: selectedIds,
+            screenerId: selectedScreenerId,
+          },
         });
 
         if (response.status !== 200) {
           throw new Error("Something went wrong");
+        }
+
+        // Notify NotificationPopover about new jobs
+        const responseData = response.data as {
+          ok: boolean;
+          jobs?: Array<{ jobId: string; dealId: string }>;
+        };
+        if (responseData.ok && responseData.jobs) {
+          const jobData = responseData.jobs.map((job) => ({
+            jobId: job.jobId,
+            dealId: job.dealId,
+            userId: user?.id || "",
+            userEmail: user?.email || "",
+          }));
+
+          // Dispatch custom event for real-time updates
+          window.dispatchEvent(new CustomEvent("newJobs", { detail: jobData }));
+          console.log(`📢 Dispatched ${jobData.length} new jobs`);
         }
 
         toast.success("Deals Added to Queue");
