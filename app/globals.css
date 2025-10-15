@@ -207,18 +207,16 @@
 }
 
 * {
-  font-family: var(--font-poppins);
+  font-family: var(--font-raleway);
 }
 
 h1,
 h2,
 h3,
 h4,
-span,
-p ul,
-li h5,
+h5,
 h6 {
-  font-family: var(--font-poppins);
+  font-family: var(--font-bitter);
 }
 
 @media screen and (max-width: 1024px) {
