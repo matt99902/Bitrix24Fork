@@ -20,9 +20,9 @@ interface RollupUpdatePayload {
 // --- GET single rollup ---
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const rollup = await prisma.rollup.findUnique({
@@ -40,16 +40,19 @@ export async function GET(
     return NextResponse.json({ rollup });
   } catch (error) {
     console.error("Error fetching rollup:", error);
-    return NextResponse.json({ error: "Failed to fetch rollup" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch rollup" },
+      { status: 500 },
+    );
   }
 }
 
 // --- PATCH update rollup + deals ---
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     // Optional: check user session
@@ -92,16 +95,19 @@ export async function PATCH(
     return NextResponse.json({ rollup: rollupWithRelations });
   } catch (error) {
     console.error("Update failed:", error);
-    return NextResponse.json({ error: "Failed to update rollup" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update rollup" },
+      { status: 500 },
+    );
   }
 }
 
 // --- DELETE a rollup ---
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     // Optional: check user session
@@ -117,6 +123,9 @@ export async function DELETE(
     return NextResponse.json({ message: "Rollup deleted" });
   } catch (error) {
     console.error("Delete failed:", error);
-    return NextResponse.json({ error: "Failed to delete rollup" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete rollup" },
+      { status: 500 },
+    );
   }
 }
