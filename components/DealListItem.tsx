@@ -11,24 +11,22 @@ interface Props {
 
 export default function DealListItem({ deal, selected, onToggle }: Props) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/50">
+    <div className="flex items-center justify-between px-4 py-3">
       <div className="flex flex-1 items-center gap-3">
         <input
           type="checkbox"
           checked={selected}
           onChange={onToggle}
-          className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="h-4 w-4"
         />
         <div className="space-y-6">
           <div className="space-y-2">
             <ScrollArea className="h-12">
-              <span className="font-semibold text-foreground">
-                {deal.title}
-              </span>
+              <span className="font-semibold">{deal.title}</span>
             </ScrollArea>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <p>Brokerage: {deal.brokerage}</p>
             <p>
               Name: {deal.firstName} {deal.lastName}
@@ -41,18 +39,14 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
             <p>Phone: {deal.workPhone}</p>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Revenue:</span>
-            <span className="font-medium text-foreground">${deal.revenue}</span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">EBITDA:</span>
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-              ${deal.ebitda}
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">Industry:</span>
-            <span className="font-medium text-foreground">
-              {deal.industry || "—"}
-            </span>
+            <span>Revenue:</span>
+            <span className="font-medium">${deal.revenue}</span>
+            <span>·</span>
+            <span>EBITDA:</span>
+            <span className="px-2 py-0.5 font-semibold">${deal.ebitda}</span>
+            <span>·</span>
+            <span>Industry:</span>
+            <span className="font-medium">{deal.industry || "—"}</span>
           </div>
         </div>
       </div>
@@ -60,7 +54,7 @@ export default function DealListItem({ deal, selected, onToggle }: Props) {
       <div className="flex flex-shrink-0">
         <Link
           href={`/raw-deals/${deal.id}`}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
         >
           View Details
         </Link>
