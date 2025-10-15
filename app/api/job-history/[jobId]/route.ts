@@ -4,7 +4,7 @@ import { redisClient } from "@/lib/redis";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { jobId: string } },
+  { params }: { params: Promise<{ jobId: string }> },
 ) {
   const userSession = await auth();
 
@@ -12,7 +12,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { jobId } = params;
+  const { jobId } = await params;
 
   if (!jobId) {
     return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
