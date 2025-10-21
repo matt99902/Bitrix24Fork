@@ -26,6 +26,12 @@ model User {
   UserActionLog UserActionLog[]
   Deal          Deal[]
   Rollups       Rollup[]        @relation("UserRollups")
+
+  // Due Diligence relationships
+  files         File[]
+  reviews       Review[]
+  assignedTasks Task[]   @relation("TaskAssignee")
+  createdTasks  Task[]   @relation("TaskCreator")
 }
 
 model Account {
@@ -238,4 +244,192 @@ model Rollup {
 
   deals Deal[] @relation("RollupDeals")
   users User[] @relation("UserRollups")
+}
+
+// Due Diligence Models
+
+enum CompanyStage {
+  STARTUP
+  GROWTH
+  MATURE
+  TURNAROUND
+  DISTRESSED
+}
+
+enum FileCategory {
+  FINANCIALS
+  LEGAL
+  TAX
+  TECHNICAL
+  COMMERCIAL
+  ESG
+  MARKETING
+  OPERATIONS
+  OTHER
+}
+
+enum DueDiligenceSectionType {
+  FINANCIAL
+  LEGAL
+  TAX
+  TECHNICAL
+  COMMERCIAL
+  ESG
+  OPERATIONAL
+  MARKET
+  MANAGEMENT
+}
+
+enum SectionStatus {
+  PENDING
+  IN_REVIEW
+  DONE
+  BLOCKED
+}
+
+enum TaskStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Company {
+  id           String        @id @default(cuid())
+  name         String
+  website      String?
+  sector       String?
+  stage        CompanyStage?
+  headquarters String?
+  description  String?
+
+  // Financial summary
+  revenue    Float?
+  ebitda     Float?
+  growthRate Float?
+  employees  Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  files    File[]
+  sections DueDiligenceSection[]
+  reviews  Review[]
+  tasks    Task[]
+  founders Founder[]
+}
+
+model Founder {
+  id        String   @id @default(cuid())
+  name      String
+  title     String?
+  email     String?
+  linkedin  String?
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model File {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  category    FileCategory
+  tags        String[]     @default([])
+  fileUrl     String
+  fileName    String
+  fileSize    Int?
+  mimeType    String?
+
+  version  String  @default("1.0")
+  isLatest Boolean @default(true)
+
+  // Relationships
+  companyId    String
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User    @relation(fields: [uploadedById], references: [id])
+
+  // Comments and metadata
+  comments String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DueDiligenceSection {
+  id          String                  @id @default(cuid())
+  title       String
+  description String?
+  type        DueDiligenceSectionType
+  status      SectionStatus           @default(PENDING)
+  notes       String?
+  findings    String?
+
+  // Relationships
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reviews   Review[]
+  tasks     Task[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id         String    @id @default(cuid())
+  title      String
+  content    String
+  riskLevel  RiskLevel @default(MEDIUM)
+  confidence Int? // 1-10 scale
+
+  // Relationships
+  companyId  String
+  company    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sectionId  String?
+  section    DueDiligenceSection? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User                 @relation(fields: [reviewerId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(ASSIGNED)
+  priority    Int?       @default(3) // 1-5 scale, 1 being highest
+
+  // Due date
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  // Relationships
+  companyId    String
+  company      Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sectionId    String?
+  section      DueDiligenceSection? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  assignedToId String
+  assignedTo   User                 @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdById  String
+  createdBy    User                 @relation("TaskCreator", fields: [createdById], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

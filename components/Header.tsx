@@ -15,6 +15,7 @@ import {
   FiSearch,
   FiClock,
 } from "react-icons/fi";
+import { FiHome } from "react-icons/fi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,7 @@ export const NavLinks: NavLinkType = [
   { navlink: "/raw-deals", navlabel: "Raw", icon: FiList },
   { navlink: "/published-deals", navlabel: "Published", icon: FiCheckSquare },
   { navlink: "/screeners", navlabel: "Screener", icon: FaScrewdriver },
+  { navlink: "/companies", navlabel: "Companies", icon: FiHome },
   { navlink: "/job-history", navlabel: "History", icon: FiClock },
   { navlink: "/rollups", navlabel: "Rollups", icon: HiChevronUp },
 ];
