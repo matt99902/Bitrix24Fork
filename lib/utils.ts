@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { UserRole } from "@prisma/client";
+import { ImageIcon } from "lucide-react";
 
 export const adminEmails = [
   "rg5353070@gmail.com",
@@ -12,6 +13,39 @@ export const adminEmails = [
   "da@darkalphacapital.com",
   "daigbe@gmail.com",
 ];
+
+export function getFileIcon(type: string) {
+  if (type.startsWith("image/")) return ImageIcon;
+  if (type.startsWith("video/")) return File;
+  if (type.startsWith("audio/")) return File;
+  if (type.includes("pdf") || type.includes("document")) return File;
+  if (type.includes("zip") || type.includes("rar")) return File;
+  return File;
+}
+
+export function formatFileSize(bytes: number) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (
+    Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+  );
+}
+
+export function cleanStr(val?: string | null): string {
+  if (!val) return "";
+  const s = String(val).trim();
+  return s.toLowerCase() === "nan" ? "" : s;
+}
+
+export function cleanNum(val?: string | number | null): number | null {
+  if (val === undefined || val === null) return null;
+  const s = String(val).trim();
+  if (s.toLowerCase() === "nan" || s === "") return null;
+  const digits = s.replace(/[^\d]/g, "");
+  return digits ? Number(digits) : null;
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

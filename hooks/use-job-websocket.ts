@@ -27,7 +27,6 @@ export function useJobWebSocket(userId: string) {
         console.log("✅ WebSocket connected");
         setIsConnected(true);
 
-        // Resubscribe to any pending jobs
         pendingSubscriptions.current.forEach((jobId) => {
           ws.send(JSON.stringify({ action: "subscribe", jobId }));
           console.log(`🔄 Resubscribed to job: ${jobId}`);
@@ -43,7 +42,6 @@ export function useJobWebSocket(userId: string) {
           if (message.type === "connected") {
             console.log(`🆔 Client ID: ${message.clientId}`);
           } else if (message.jobId && message.status) {
-            // Update job status
             console.log(`📊 Job ${message.jobId}: ${message.status}`);
             setJobs((prev) => {
               const updated = new Map(prev);
@@ -68,7 +66,6 @@ export function useJobWebSocket(userId: string) {
       ws.onclose = () => {
         console.log("🔌 WebSocket disconnected");
         setIsConnected(false);
-        // Reconnect after 3 seconds
         setTimeout(connect, 3000);
       };
     };
@@ -82,7 +79,6 @@ export function useJobWebSocket(userId: string) {
     };
   }, []);
 
-  // Subscribe to job updates
   const subscribeToJob = useCallback((jobId: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ action: "subscribe", jobId }));
@@ -93,7 +89,6 @@ export function useJobWebSocket(userId: string) {
     }
   }, []);
 
-  // Add job and immediately subscribe
   const addJob = useCallback(
     (job: Job) => {
       console.log(`➕ Adding job: ${job.jobId}`);
@@ -103,7 +98,6 @@ export function useJobWebSocket(userId: string) {
     [subscribeToJob],
   );
 
-  // Listen for new jobs from bulk screening
   useEffect(() => {
     const handleNewJobs = (e: CustomEvent) => {
       const newJobs = e.detail;

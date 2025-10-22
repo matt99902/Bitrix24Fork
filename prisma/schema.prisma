@@ -28,7 +28,6 @@ model User {
   Deal          Deal[]
   Rollups       Rollup[]        @relation("UserRollups")
 
-  // Due Diligence relationships
   files         File[]
   reviews       Review[]
   assignedTasks Task[]   @relation("TaskAssignee")

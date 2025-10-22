@@ -292,3 +292,55 @@ export async function getRollupById(rollupId: string) {
     return null;
   }
 }
+
+/**
+ * Get a company by id
+ * @param id - the id of the company
+ * @returns the company
+ */
+export async function getCompanyById(id: string) {
+  try {
+    return await prismaDB.company.findUnique({
+      where: { id },
+      include: {
+        founders: true,
+        files: {
+          orderBy: { createdAt: "desc" },
+        },
+        sections: {
+          orderBy: { createdAt: "desc" },
+        },
+        reviews: {
+          include: {
+            reviewer: {
+              select: { name: true, email: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        tasks: {
+          include: {
+            assignedTo: {
+              select: { name: true, email: true },
+            },
+            createdBy: {
+              select: { name: true, email: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        _count: {
+          select: {
+            files: true,
+            sections: true,
+            reviews: true,
+            tasks: true,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching company by id", error);
+    return null;
+  }
+}

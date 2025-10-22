@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ import Link from "next/link";
 import prismaDB from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import CompanyActions from "@/components/company-actions";
+import { BulkFileUploadDialog } from "@/components/Dialogs/bulk-file-upload-dialog";
+import { getCompanyById } from "@/lib/queries";
+import { auth } from "@/auth";
 
 interface CompanyDetailPageProps {
   params: Promise<{
@@ -51,46 +54,13 @@ export default async function CompanyDetailPage({
   params,
 }: CompanyDetailPageProps) {
   const { id } = await params;
+  const userSession = await auth();
 
-  const company = await prismaDB.company.findUnique({
-    where: { id },
-    include: {
-      founders: true,
-      files: {
-        orderBy: { createdAt: "desc" },
-      },
-      sections: {
-        orderBy: { createdAt: "desc" },
-      },
-      reviews: {
-        include: {
-          reviewer: {
-            select: { name: true, email: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-      tasks: {
-        include: {
-          assignedTo: {
-            select: { name: true, email: true },
-          },
-          createdBy: {
-            select: { name: true, email: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-      _count: {
-        select: {
-          files: true,
-          sections: true,
-          reviews: true,
-          tasks: true,
-        },
-      },
-    },
-  });
+  if (!userSession?.user) {
+    redirect("/auth/login");
+  }
+
+  const company = await getCompanyById(id);
 
   if (!company) {
     notFound();
@@ -126,6 +96,8 @@ export default async function CompanyDetailPage({
             Back to Companies
           </Link>
         </Button>
+
+        <BulkFileUploadDialog />
 
         <div className="flex items-start justify-between">
           <div className="space-y-2">

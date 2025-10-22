@@ -31,6 +31,7 @@ import {
   AddCompanyFormSchemaType,
 } from "@/lib/zod-schemas/add-company-schema";
 import AddCompany from "@/app/actions/add-company";
+import { Loader2 } from "lucide-react";
 
 export default function CreateNewCompanyForm() {
   const [isPending, startTransition] = useTransition();
@@ -61,7 +62,7 @@ export default function CreateNewCompanyForm() {
       } else {
         toast.success(result.message);
         form.reset();
-        router.push("/companies");
+        router.push(`/companies/${result.company?.id}`);
       }
     });
   }
@@ -279,7 +280,14 @@ export default function CreateNewCompanyForm() {
 
         <div className="flex justify-end md:col-span-2">
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Adding Company..." : "Add Company"}
+            {isPending ? (
+              <div>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Adding Company...
+              </div>
+            ) : (
+              "Add Company"
+            )}
           </Button>
         </div>
       </form>

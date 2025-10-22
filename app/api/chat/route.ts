@@ -1,9 +1,34 @@
 import { openai } from "@/lib/ai/available-models";
-import { weatherTool } from "@/lib/ai/tools/weather";
-import { stockTool } from "@/lib/ai/tools/stock";
-import { streamText } from "ai";
-import { NextResponse } from "next/server";
+import { streamText, UIMessage, convertToModelMessages } from "ai";
 
-export async function POST(request: Request) {
-  return NextResponse.json({ message: "Hello, world!" });
+// Allow streaming responses up to 30 seconds
+export const maxDuration = 30;
+
+export async function POST(req: Request) {
+  const {
+    messages,
+    model,
+    webSearch,
+  }: {
+    messages: UIMessage[];
+    model: string;
+    webSearch: boolean;
+  } = await req.json();
+
+  console.log("messages", messages);
+  console.log("model", model);
+  console.log("webSearch", webSearch);
+
+  const result = streamText({
+    model: openai("gpt-4o"),
+    messages: convertToModelMessages(messages),
+    system:
+      "You are a helpful assistant that can answer questions and help with tasks",
+  });
+
+  // send sources and reasoning back to the client
+  return result.toUIMessageStreamResponse({
+    sendSources: true,
+    sendReasoning: true,
+  });
 }

@@ -66,7 +66,6 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
         <PopoverTrigger asChild>
           <button className="relative rounded-full p-2 transition-colors duration-200 hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
             <BellIcon className="size-5 text-foreground" />
-            {/* Active jobs badge */}
             {activeJobs.length > 0 && (
               <Badge
                 variant="destructive"
@@ -75,7 +74,6 @@ const NotificationPopover = ({ userId }: { userId: string }) => {
                 {activeJobs.length}
               </Badge>
             )}
-            {/* WebSocket connection status */}
             <div
               className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-background ${
                 isConnected ? "bg-green-500" : "bg-red-500"
