@@ -24,13 +24,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, Lock } from "lucide-react";
-import { ModeToggle } from "./mode-toggle";
 import { Session } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
-import { IconType } from "react-icons/lib";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import NotificationPopover from "./NotificationPopover";
 import { FaScrewdriver } from "react-icons/fa";
 
@@ -52,22 +49,13 @@ export const NavLinks: NavLinkType = [
   { navlink: "/screeners", navlabel: "Screener", icon: FaScrewdriver },
   { navlink: "/companies", navlabel: "Companies", icon: FiHome },
   { navlink: "/job-history", navlabel: "History", icon: FiClock },
-  { navlink: "/rollups", navlabel: "Rollups", icon: HiChevronUp },
+  // { navlink: "/rollups", navlabel: "Rollups", icon: HiChevronUp },
 ];
 
 const Header = ({ className, session }: HeaderProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Add admin-specific link if user is an admin
   const isAdmin = session?.user?.role === "ADMIN";

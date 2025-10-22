@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import prismaDB from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
+import CompanyActions from "@/components/company-actions";
 
 interface CompanyDetailPageProps {
   params: Promise<{
@@ -147,6 +148,7 @@ export default async function CompanyDetailPage({
             <Button asChild>
               <Link href={`/companies/${company.id}/edit`}>Edit Company</Link>
             </Button>
+            <CompanyActions companyId={company.id} companyName={company.name} />
           </div>
         </div>
       </div>

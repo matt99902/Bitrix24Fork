@@ -1,5 +1,17 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { UserRole } from "@prisma/client";
+
+export const adminEmails = [
+  "rg5353070@gmail.com",
+  "amani.151413@gmail.com",
+  "rahul@darkalphacapital.com",
+  "destiny@darkalphacapital.com",
+  "daigbe@darkalphacapital.com",
+  "diligence@darkalphacapital.com",
+  "da@darkalphacapital.com",
+  "daigbe@gmail.com",
+];
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -29,6 +41,20 @@ export function formatNumberWithCommas(x: string) {
 // Remove commas for search
 export function unformatNumber(x: string) {
   return x.replace(/,/g, "");
+}
+
+/**
+ * determine the role of the user based on their email
+ *
+ * @param userEmail - the email of the user
+ * @returns the role of the user
+ */
+export function determineRole(userEmail: string) {
+  if (adminEmails.includes(userEmail)) {
+    return UserRole.ADMIN;
+  } else {
+    return UserRole.USER;
+  }
 }
 
 export async function splitContentIntoChunks(

@@ -14,114 +14,55 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Box,
-  FileText,
-  BarChart2,
-  PlusCircle,
-  User,
-  LogIn,
-  FileQuestion,
-  FileTerminal,
-  Shield,
-  ExternalLink,
-  Hand,
-  SendHorizonal,
-  Forward,
+  Info,
+  Mail,
+  Home,
+  Lock,
+  Building,
+  List,
+  CheckSquare,
+  Filter,
 } from "lucide-react";
 
-const menuItems = [
-  {
-    category: "Deals",
-    items: [
-      { navLink: "/raw-deals", navTitle: "Raw Deals", icon: FileText },
-      { navLink: "/new-deal", navTitle: "Create New Deal", icon: PlusCircle },
-      { navLink: "/manual-deals", navTitle: "Manual Deals", icon: Hand },
-      {
-        navLink: "/published-deals",
-        navTitle: "Published Deals",
-        icon: BarChart2,
-      },
-      {
-        navLink: "/inferred-deals",
-        navTitle: "Inferred Deals",
-        icon: FileText,
-      },
-      { navLink: "/infer", navTitle: "Infer New Deal", icon: PlusCircle },
-    ],
-  },
-  {
-    catgeory: "Bitrix",
-    items: [
-      {
-        navLink: "/publish",
-        navTitle: "Publish to Bitrix",
-        icon: SendHorizonal,
-        external: false,
-      },
-      {
-        navLink: "/published-deals",
-        navTitle: "Published Deals",
-        icon: Forward,
-        external: false,
-      },
-    ],
-  },
-  {
-    category: "Questionnaires",
-    items: [
-      {
-        navLink: "/questionnaires",
-        navTitle: "View Questionnaires",
-        icon: LogIn,
-      },
-      {
-        navLink: "/questionnaires",
-        navTitle: "Upload Questionnaire",
-        icon: User,
-      },
-    ],
-  },
-  {
-    category: "User",
-    items: [
-      { navLink: "/login", navTitle: "Login", icon: LogIn },
-      { navLink: "/profile", navTitle: "Profile", icon: User },
-    ],
-  },
-  {
-    category: "Information",
-    items: [
-      {
-        navLink: "/getting-started",
-        navTitle: "Getting Started",
-        icon: FileQuestion,
-      },
-      {
-        navLink: "/terms-of-service",
-        navTitle: "Terms of Service",
-        icon: FileTerminal,
-      },
-      { navLink: "/privacy-policy", navTitle: "Privacy Policy", icon: Shield },
-    ],
-  },
-  {
-    category: "External Links",
-    items: [
-      {
-        navLink: "https://bitrix24.com",
-        navTitle: "Bitrix24",
-        icon: ExternalLink,
-        external: true,
-      },
-      {
-        navLink: "/publish-to-bitrix",
-        navTitle: "Publish New Deal to Bitrix",
-        icon: ExternalLink,
-      },
-    ],
-  },
-];
-
 export default function MenuDialog() {
+  const menuItems = [
+    {
+      category: "Navigation",
+      items: [
+        {
+          navLink: "/",
+          navTitle: "Home",
+          icon: Home,
+        },
+        {
+          navLink: "/new-deal",
+          navTitle: "New Deal",
+          icon: Info,
+        },
+        {
+          navLink: "/raw-deals",
+          navTitle: "Raw Deals",
+          icon: List,
+        },
+        {
+          navLink: "/published-deals",
+          navTitle: "Published Deals",
+          icon: CheckSquare,
+        },
+        {
+          navLink: "/screeners",
+          navTitle: "Screeners",
+          icon: Filter,
+        },
+        {
+          navLink: "/companies",
+          navTitle: "Companies",
+          icon: Building,
+        },
+      ],
+    },
+  ];
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -150,8 +91,8 @@ export default function MenuDialog() {
                     key={itemIndex}
                     href={item.navLink}
                     className="flex items-center rounded-lg p-3 text-sm transition-colors hover:bg-muted"
-                    target={item.external ? "_blank" : undefined}
-                    rel={item.external ? "noopener noreferrer" : undefined}
+                    target={undefined}
+                    rel={undefined}
                   >
                     <item.icon className="mr-3 h-5 w-5 text-primary" />
                     <span>{item.navTitle}</span>

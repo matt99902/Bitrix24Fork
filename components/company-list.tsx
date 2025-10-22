@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,9 @@ import {
   Calendar,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import DeleteCompanyDialog from "@/components/Dialogs/delete-company-dialog";
+import DeleteCompany from "@/app/actions/delete-company";
 
 interface Company {
   id: string;
@@ -52,6 +56,10 @@ interface CompanyCardProps {
 }
 
 function CompanyCard({ company }: CompanyCardProps) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const formatStage = (stage?: string) => {
     if (!stage) return null;
     const stageColors = {
@@ -71,6 +79,36 @@ function CompanyCard({ company }: CompanyCardProps) {
         {stage.replace("_", " ")}
       </Badge>
     );
+  };
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      try {
+        const result = await DeleteCompany(company.id);
+
+        if (result.type === "success") {
+          toast({
+            title: "Company Deleted",
+            description: result.message,
+            variant: "default",
+          });
+          router.refresh();
+        } else {
+          toast({
+            title: "Error",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting company:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   return (
@@ -175,6 +213,15 @@ function CompanyCard({ company }: CompanyCardProps) {
               Due Diligence
             </Link>
           </Button>
+        </div>
+
+        {/* Delete Button */}
+        <div className="pt-2">
+          <DeleteCompanyDialog
+            companyName={company.name}
+            onDelete={handleDelete}
+            isDeleting={isPending}
+          />
         </div>
       </CardContent>
     </Card>
