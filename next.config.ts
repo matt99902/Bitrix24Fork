@@ -1,7 +1,9 @@
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from "next";
 
-module.exports = {
+const nextConfig: NextConfig = {
   serverExternalPackages: ["pdf-parse", "tiktoken"],
+  reactCompiler: true,
+
   images: {
     remotePatterns: [
       {
@@ -19,3 +21,5 @@ module.exports = {
     },
   },
 };
+
+export default nextConfig;

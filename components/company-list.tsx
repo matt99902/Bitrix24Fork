@@ -133,7 +133,6 @@ function CompanyCard({ company }: CompanyCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Company Details */}
         <div className="space-y-2 text-sm">
           {company.headquarters && (
             <div className="flex items-center gap-2 text-muted-foreground">
