@@ -60,7 +60,7 @@
     "@types/pdf-parse": "^1.1.4",
     "@vercel/blob": "^0.26.0",
     "@xyflow/react": "^12.9.0",
-    "ai": "^5.0.76",
+    "ai": "^5.0.77",
     "axios": "^1.8.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "class-variance-authority": "^0.7.1",
