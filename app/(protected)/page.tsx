@@ -11,7 +11,6 @@ const Home = async () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
