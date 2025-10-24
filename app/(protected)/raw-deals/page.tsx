@@ -25,8 +25,8 @@ import SearchStatusDeals from "@/components/search-status-deals";
 import SearchTagsDeals from "@/components/search-tags-deals";
 import DeleteFiltersButton from "@/components/Buttons/delete-filters-button";
 import SearchRecentDeals from "@/components/search-recent-deals";
-
-
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Raw Deals",
@@ -68,6 +68,10 @@ const RawDealsPage = async (props: { searchParams: SearchParams }) => {
       : searchParams?.tags || [];
 
   console.log("tags inside filter", tags);
+
+  const userSession = await auth();
+
+  if (!userSession) redirect("/auth/login");
 
   const { data, totalPages, totalCount } = await GetAllDeals({
     search,
