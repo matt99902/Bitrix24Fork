@@ -1,5 +1,4 @@
 import NextAuth, { DefaultSession } from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import prismaDB from "./lib/prisma";
 import { User, UserRole } from "@prisma/client";
 import authConfig from "./auth.config";
@@ -32,25 +31,11 @@ declare module "next-auth" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prismaDB),
   session: { strategy: "jwt" },
   debug: true,
   pages: {
     signIn: "/auth/login",
     error: "/auth/error",
-  },
-  events: {
-    //this event is only triggered when we use an OAuth provider
-    async linkAccount({ user }) {
-      await prismaDB.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          emailVerified: new Date(),
-        },
-      });
-    },
   },
 
   callbacks: {
