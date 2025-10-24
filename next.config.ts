@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["pdf-parse", "tiktoken", "@prisma/client"],
+  serverExternalPackages: ["pdf-parse", "tiktoken"],
   reactCompiler: true,
 
   images: {
