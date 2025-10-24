@@ -12,6 +12,22 @@ declare module "next-auth" {
       role: UserRole;
       isOAuth: boolean;
     } & DefaultSession["user"];
+    accessToken?: string;
+    error?: string;
+  }
+}
+
+declare module "next-auth" {
+  interface JWT {
+    accessToken?: string;
+    accessTokenExpires?: number;
+    user?: {
+      id: string;
+      email: string;
+      name?: string;
+      image?: string;
+    };
+    error?: string;
   }
 }
 
@@ -37,39 +53,114 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 
   callbacks: {
-    async session({ session, user }) {
-      // Prefer hydrating from DB to avoid relying on AdapterUser shape
-      const email = session.user?.email ?? user?.email ?? null;
-      if (email) {
-        const dbUser = await prismaDB.user.findUnique({ where: { email } });
-        if (dbUser && session.user) {
-          session.user.id = dbUser.id;
-          session.user.role = dbUser.role as UserRole;
-          session.user.image = dbUser.image ?? session.user.image;
+    async jwt({ token, user, account }) {
+      // Initial sign in
+      if (account && user) {
+        return {
+          ...token,
+          accessToken: account.access_token,
+          accessTokenExpires: account.expires_at
+            ? account.expires_at * 1000
+            : 0,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          },
+        };
+      }
+
+      // Return previous token if the access token has not expired yet
+      if (Date.now() < (token.accessTokenExpires as number)) {
+        return token;
+      }
+
+      // Access token has expired, return token with error
+      return {
+        ...token,
+        error: "AccessTokenExpired",
+      };
+    },
+    async session({ session, token }) {
+      // Send properties to the client
+      // Ensure session.user exists and is an object
+      if (token && typeof token.user === "object" && token.user !== null) {
+        session.user = {
+          ...session.user,
+          ...(token.user as {
+            id: string;
+            email: string;
+            name?: string | null;
+            image?: string | null;
+          }),
+        };
+        if (
+          typeof token.accessToken === "string" ||
+          typeof token.accessToken === "undefined"
+        ) {
+          session.accessToken = token.accessToken;
+        }
+        if (
+          typeof token.error === "string" ||
+          typeof token.error === "undefined"
+        ) {
+          session.error = token.error;
         }
       }
+
+      // Hydrate additional user data from database
+      if (session.user?.email) {
+        try {
+          const dbUser = await prismaDB.user.findUnique({
+            where: { email: session.user.email },
+          });
+          if (dbUser) {
+            session.user.role = dbUser.role as UserRole;
+            session.user.isOAuth = true;
+          }
+        } catch (error) {
+          console.error("Error fetching user from database:", error);
+        }
+      }
+
       return session;
     },
-    async signIn({ user }) {
-      const userEmail = user.email;
-      const currentUser = userEmail
-        ? await getCurrentUserByEmail(userEmail)
-        : null;
+    async signIn({ user, account, profile }) {
+      if (!user.email) return false;
 
-      if (currentUser?.isBlocked) {
+      try {
+        // Check if user is blocked
+        const currentUser = await getCurrentUserByEmail(user.email);
+        if (currentUser?.isBlocked) {
+          return false;
+        }
+
+        // Ensure user exists in database and role is set
+        const userRole = determineRole(user.email);
+        await prismaDB.user.upsert({
+          where: { email: user.email },
+          update: {
+            role: userRole,
+            name: user.name,
+            image: user.image,
+            emailVerified: new Date(),
+          },
+          create: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: userRole,
+            emailVerified: new Date(),
+          },
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Error during sign in:", error);
         return false;
       }
-
-      // Ensure role is set/updated on sign in
-      if (userEmail) {
-        const userRole = determineRole(userEmail);
-        await prismaDB.user.update({
-          where: { id: user.id },
-          data: { role: userRole },
-        });
-      }
-
-      return true;
     },
   },
   ...authConfig,
