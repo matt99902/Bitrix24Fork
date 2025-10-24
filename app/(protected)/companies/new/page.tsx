@@ -3,13 +3,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import CreateNewCompanyForm from "@/components/forms/new-company-form";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Add New Company - Due Diligence",
   description: "Add a new company for due diligence",
 };
 
-export default function NewCompanyPage() {
+export default async function NewCompanyPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/auth/login");
+  }
   return (
     <section className="big-container block-space min-h-screen">
       <div className="mb-6">

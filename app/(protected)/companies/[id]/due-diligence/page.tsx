@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import prismaDB from "@/lib/prisma";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 interface DueDiligencePageProps {
   params: Promise<{
@@ -52,7 +54,10 @@ export default async function DueDiligencePage({
   params,
 }: DueDiligencePageProps) {
   const { id } = await params;
-
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/auth/login");
+  }
   const company = await prismaDB.company.findUnique({
     where: { id },
     include: {

@@ -5,6 +5,8 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import GetCompanies from "@/app/actions/get-companies";
 import CompanyList from "@/components/company-list";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Companies - Due Diligence",
@@ -26,6 +28,11 @@ export default async function CompaniesPage({
   const page = parseInt(params.page || "1");
   const limit = 12;
   const offset = (page - 1) * limit;
+
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/auth/login");
+  }
 
   const { companies, totalCount, totalPages } = await GetCompanies({
     search,
