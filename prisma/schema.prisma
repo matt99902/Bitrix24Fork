@@ -3,35 +3,30 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-enum UserRole {
-  USER
-  ADMIN
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
   id            String          @id @default(cuid())
   name          String?
+  createdAt     DateTime        @default(now())
   email         String          @unique
   emailVerified DateTime?
   image         String?
-  accounts      Account[]
-  sessions      Session[]
   role          UserRole        @default(USER)
-  createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   isBlocked     Boolean         @default(false)
-  UserActionLog UserActionLog[]
+  accounts      Account[]
   Deal          Deal[]
-  Rollups       Rollup[]        @relation("UserRollups")
-
   files         File[]
   reviews       Review[]
-  assignedTasks Task[]   @relation("TaskAssignee")
-  createdTasks  Task[]   @relation("TaskCreator")
+  sessions      Session[]
+  assignedTasks Task[]          @relation("TaskAssignee")
+  createdTasks  Task[]          @relation("TaskCreator")
+  UserActionLog UserActionLog[]
+  Rollups       Rollup[]        @relation("UserRollups")
 }
 
 model Account {
@@ -46,11 +41,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
@@ -63,58 +56,47 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum DealStatus {
-  AVAILABLE
-  SOLD
-  UNDER_CONTRACT
-  NOT_SPECIFIED
-}
-
 model Deal {
-  id              String        @id @default(cuid())
+  id              String         @id @default(cuid())
   brokerage       String
   firstName       String?
   lastName        String?
-  tags            String[]      @default([])
-  email           String?
   linkedinUrl     String?
   workPhone       String?
   dealCaption     String
   revenue         Float
   ebitda          Float
   title           String?
-  dealTeaser      String?
   grossRevenue    Float?
   askingPrice     Float?
   ebitdaMargin    Float
   industry        String
-  dealType        DealType      @default(MANUAL)
+  dealType        DealType       @default(MANUAL)
   sourceWebsite   String
   companyLocation String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now()) @updatedAt
-  SIM             SIM[]
-  AiScreening     AiScreening[]
-
-  bitrixLink  String?
-  status      DealStatus @default(NOT_SPECIFIED)
-  isReviewed  Boolean    @default(false)
-  isPublished Boolean    @default(false)
-  seen        Boolean    @default(false)
-
-  bitrixId        String?
+  createdAt       DateTime       @default(now())
+  email           String?
+  updatedAt       DateTime       @default(now()) @updatedAt
   bitrixCreatedAt DateTime?
-
-  userId       String?
-  user         User?          @relation(fields: [userId], references: [id])
-  POC          POC[]
-  DealDocument DealDocument[]
-  Employee     Employee[]
-
-  rollupId    String? // optional
-  rollup      Rollup? @relation("RollupDeals", fields: [rollupId], references: [id])
-  chunk_text  String?
-  description String?
+  bitrixId        String?
+  userId          String?
+  dealTeaser      String?
+  tags            String[]       @default([])
+  bitrixLink      String?
+  isPublished     Boolean        @default(false)
+  isReviewed      Boolean        @default(false)
+  status          DealStatus     @default(NOT_SPECIFIED)
+  seen            Boolean        @default(false)
+  chunk_text      String?
+  description     String?
+  rollupId        String?
+  AiScreening     AiScreening[]
+  rollup          Rollup?        @relation("RollupDeals", fields: [rollupId], references: [id])
+  user            User?          @relation(fields: [userId], references: [id])
+  DealDocument    DealDocument[]
+  Employee        Employee[]
+  POC             POC[]
+  SIM             SIM[]
 }
 
 model DealDocument {
@@ -123,10 +105,218 @@ model DealDocument {
   title       String
   description String?
   category    DealDocumentCategory @default(OTHER)
-  deal        Deal                 @relation(fields: [dealId], references: [id], onDelete: Cascade)
   documentUrl String
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
+  deal        Deal                 @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model POC {
+  id        String  @id @default(cuid())
+  name      String
+  workPhone String?
+  email     String
+  dealId    String?
+  Deal      Deal?   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model SIM {
+  id        String    @id @default(cuid())
+  title     String
+  caption   String
+  status    SIMStatus
+  fileName  String
+  fileType  String
+  fileUrl   String
+  dealId    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deal      Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Questionnaire {
+  id         String   @id @default(cuid())
+  fileUrl    String
+  title      String
+  purpose    String
+  author     String
+  version    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("questionnaires")
+}
+
+model Screener {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  content     String
+  fileUrl     String
+  name        String
+  description String?
+  AiScreening AiScreening[]
+}
+
+model AiScreening {
+  id          String    @id @default(cuid())
+  dealId      String
+  title       String
+  explanation String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  sentiment   Sentiment @default(NEUTRAL)
+  content     String?
+  score       Int?
+  screenerId  String?
+  deal        Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  screener    Screener? @relation(fields: [screenerId], references: [id], onDelete: Cascade)
+}
+
+model UserActionLog {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Employee {
+  id     String  @id @default(cuid())
+  name   String
+  dealId String?
+  Deal   Deal?   @relation(fields: [dealId], references: [id])
+}
+
+model Rollup {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  summary     String?
+  deals       Deal[]   @relation("RollupDeals")
+  users       User[]   @relation("UserRollups")
+}
+
+model Company {
+  id           String                @id @default(cuid())
+  name         String
+  website      String?
+  sector       String?
+  stage        CompanyStage?
+  headquarters String?
+  description  String?
+  revenue      Float?
+  ebitda       Float?
+  growthRate   Float?
+  employees    Int?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  sections     DueDiligenceSection[]
+  files        File[]
+  founders     Founder[]
+  reviews      Review[]
+  tasks        Task[]
+}
+
+model Founder {
+  id        String   @id @default(cuid())
+  name      String
+  title     String?
+  email     String?
+  linkedin  String?
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model File {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  category     FileCategory
+  tags         String[]     @default([])
+  fileUrl      String
+  fileName     String
+  fileSize     Int?
+  mimeType     String?
+  version      String       @default("1.0")
+  isLatest     Boolean      @default(true)
+  companyId    String
+  uploadedById String
+  comments     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+}
+
+model DueDiligenceSection {
+  id          String                  @id @default(cuid())
+  title       String
+  description String?
+  type        DueDiligenceSectionType
+  status      SectionStatus           @default(PENDING)
+  notes       String?
+  findings    String?
+  companyId   String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reviews     Review[]
+  tasks       Task[]
+}
+
+model Review {
+  id         String               @id @default(cuid())
+  title      String
+  content    String
+  riskLevel  RiskLevel            @default(MEDIUM)
+  confidence Int?
+  companyId  String
+  sectionId  String?
+  reviewerId String
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  company    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reviewer   User                 @relation(fields: [reviewerId], references: [id])
+  section    DueDiligenceSection? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id           String               @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus           @default(ASSIGNED)
+  priority     Int?                 @default(3)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  companyId    String
+  sectionId    String?
+  assignedToId String
+  createdById  String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  assignedTo   User                 @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  company      Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy    User                 @relation("TaskCreator", fields: [createdById], references: [id])
+  section      DueDiligenceSection? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum DealStatus {
+  AVAILABLE
+  SOLD
+  UNDER_CONTRACT
+  NOT_SPECIFIED
 }
 
 enum DealDocumentCategory {
@@ -143,42 +333,6 @@ enum DealDocumentCategory {
   OTHER
 }
 
-model POC {
-  id        String  @id @default(cuid())
-  name      String
-  workPhone String?
-  email     String
-  Deal      Deal?   @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  dealId    String?
-}
-
-model SIM {
-  id        String    @id @default(cuid())
-  title     String
-  caption   String
-  status    SIMStatus
-  fileName  String
-  fileType  String
-  fileUrl   String
-  dealId    String
-  deal      Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Questionnaire {
-  id         String   @id @default(cuid())
-  fileUrl    String
-  title      String
-  purpose    String
-  author     String
-  version    String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@map("questionnaires")
-}
-
 enum DealType {
   SCRAPED
   MANUAL
@@ -190,71 +344,11 @@ enum SIMStatus {
   COMPLETED
 }
 
-model Screener {
-  id          String        @id @default(cuid())
-  name        String
-  description String?
-  content     String
-  fileUrl     String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  AiScreening AiScreening[]
-}
-
-model AiScreening {
-  id          String    @id @default(cuid())
-  dealId      String
-  deal        Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  title       String
-  explanation String
-  score       Int?
-  content     String?
-  sentiment   Sentiment @default(NEUTRAL)
-
-  screenerId String?
-  screener   Screener? @relation(fields: [screenerId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum Sentiment {
   POSITIVE
   NEUTRAL
   NEGATIVE
 }
-
-model UserActionLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Employee {
-  id   String @id @default(cuid())
-  name String
-
-  Deal   Deal?   @relation(fields: [dealId], references: [id])
-  dealId String?
-}
-
-model Rollup {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  summary     String?
-
-  deals Deal[] @relation("RollupDeals")
-  users User[] @relation("UserRollups")
-}
-
-// Due Diligence Models
 
 enum CompanyStage {
   STARTUP
@@ -307,134 +401,4 @@ enum RiskLevel {
   MEDIUM
   HIGH
   CRITICAL
-}
-
-model Company {
-  id           String        @id @default(cuid())
-  name         String
-  website      String?
-  sector       String?
-  stage        CompanyStage?
-  headquarters String?
-  description  String?
-
-  // Financial summary
-  revenue    Float?
-  ebitda     Float?
-  growthRate Float?
-  employees  Int?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  files    File[]
-  sections DueDiligenceSection[]
-  reviews  Review[]
-  tasks    Task[]
-  founders Founder[]
-}
-
-model Founder {
-  id        String   @id @default(cuid())
-  name      String
-  title     String?
-  email     String?
-  linkedin  String?
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model File {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  category    FileCategory
-  tags        String[]     @default([])
-  fileUrl     String
-  fileName    String
-  fileSize    Int?
-  mimeType    String?
-
-  version  String  @default("1.0")
-  isLatest Boolean @default(true)
-
-  companyId    String
-  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  uploadedById String
-  uploadedBy   User    @relation(fields: [uploadedById], references: [id])
-
-  comments String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model DueDiligenceSection {
-  id          String                  @id @default(cuid())
-  title       String
-  description String?
-  type        DueDiligenceSectionType
-  status      SectionStatus           @default(PENDING)
-  notes       String?
-  findings    String?
-
-  // Relationships
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  reviews   Review[]
-  tasks     Task[]
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Review {
-  id         String    @id @default(cuid())
-  title      String
-  content    String
-  riskLevel  RiskLevel @default(MEDIUM)
-  confidence Int? // 1-10 scale
-
-  // Relationships
-  companyId  String
-  company    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  sectionId  String?
-  section    DueDiligenceSection? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  reviewerId String
-  reviewer   User                 @relation(fields: [reviewerId], references: [id])
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Task {
-  id          String     @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus @default(ASSIGNED)
-  priority    Int?       @default(3) // 1-5 scale, 1 being highest
-
-  // Due date
-  dueDate     DateTime?
-  completedAt DateTime?
-
-  // Relationships
-  companyId    String
-  company      Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  sectionId    String?
-  section      DueDiligenceSection? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  assignedToId String
-  assignedTo   User                 @relation("TaskAssignee", fields: [assignedToId], references: [id])
-  createdById  String
-  createdBy    User                 @relation("TaskCreator", fields: [createdById], references: [id])
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
